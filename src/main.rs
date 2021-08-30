@@ -6,8 +6,8 @@ pub mod dice {
 
     pub const DICE_COUNT: usize = 8;
 
-    #[derive(Debug)]
-    enum DieValue {
+    #[derive(Debug, PartialEq)]
+    pub enum DieLabel {
         One = 1,
         Two = 2,
         Three = 3,
@@ -16,9 +16,10 @@ pub mod dice {
         Maggot = 6,
     }
 
-    struct Die {
-        label: DieValue,
-        value: u8,
+    #[derive(Debug)]
+    pub struct Die {
+        pub label: DieLabel,
+        pub value: u8,
     }
 
     impl fmt::Display for Die {
@@ -28,82 +29,45 @@ pub mod dice {
     }
 
     impl Die {
-        fn roll() -> Die {
+        pub fn roll() -> Die {
             match rand::thread_rng().gen_range(1..=6) {
                 1 => Die {
-                    label: DieValue::One,
+                    label: DieLabel::One,
                     value: 1,
                 },
                 2 => Die {
-                    label: DieValue::Two,
+                    label: DieLabel::Two,
                     value: 2,
                 },
                 3 => Die {
-                    label: DieValue::Three,
+                    label: DieLabel::Three,
                     value: 3,
                 },
                 4 => Die {
-                    label: DieValue::Four,
+                    label: DieLabel::Four,
                     value: 4,
                 },
                 5 => Die {
-                    label: DieValue::Five,
+                    label: DieLabel::Five,
                     value: 5,
                 },
                 6 => Die {
-                    label: DieValue::Maggot,
+                    label: DieLabel::Maggot,
                     value: 5,
                 },
                 _ => unreachable!(),
             }
         }
     }
-
-    pub struct DiceRoll {
-        dice: [Die; DICE_COUNT],
-    }
-
-    impl fmt::Display for DiceRoll {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(
-                f,
-                "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
-                self.dice[0].label,
-                self.dice[1].label,
-                self.dice[2].label,
-                self.dice[3].label,
-                self.dice[4].label,
-                self.dice[5].label,
-                self.dice[6].label,
-                self.dice[7].label
-            )
-        }
-    }
-
-    impl DiceRoll {
-        pub fn roll() -> DiceRoll {
-            DiceRoll {
-                dice: [
-                    Die::roll(),
-                    Die::roll(),
-                    Die::roll(),
-                    Die::roll(),
-                    Die::roll(),
-                    Die::roll(),
-                    Die::roll(),
-                    Die::roll(),
-                ],
-            }
-        }
-    }
 }
 
 pub mod engine {
+    use crate::dice;
     use std::fmt;
     use std::io;
 
     const DOMINO_COUNT: usize = 16;
-
+    const DICE_COUNT: usize = 8;
     const MAX_ROUND: usize = 1;
 
     struct Domino {
@@ -119,6 +83,12 @@ pub mod engine {
     }
 
     #[derive(Debug)]
+    struct DiceDraw {
+        dice: dice::Die,
+        count: u8,
+    }
+
+    #[derive(Debug)]
     pub enum PlayerAction {
         Roll,
         Draw,
@@ -128,17 +98,25 @@ pub mod engine {
     #[derive(Debug)]
     struct PlayerState {
         domino_stack: Vec<Domino>, // a player stack can contains at most the total number of domino
-        total: u8,
-        remaining_dice: usize,
+        dice_drawn: Vec<DiceDraw>,
     }
 
     impl PlayerState {
         fn init() -> PlayerState {
             PlayerState {
                 domino_stack: Vec::with_capacity(DOMINO_COUNT),
-                total: 0,
-                remaining_dice: crate::dice::DICE_COUNT,
+                dice_drawn: Vec::with_capacity(DICE_COUNT),
             }
+        }
+        fn total(&self) -> u8 {
+            let mut total: u8 = 0;
+            for dice_draw in self.dice_drawn.iter() {
+                total += dice_draw.count * dice_draw.dice.value;
+            }
+            total
+        }
+        fn drawable_dice_count(&self) -> usize {
+            DICE_COUNT - self.dice_drawn.len()
         }
     }
 
@@ -151,7 +129,7 @@ pub mod engine {
 
     pub struct GameState {
         players: Vec<Player>,
-        current_player: u8, // index in players Vector of the current player
+        index_current_player: usize, // index in players Vector of the current player
         dominos: [Domino; DOMINO_COUNT],
     }
 
@@ -267,7 +245,7 @@ pub mod engine {
 
             GameState {
                 players: players,
-                current_player: 0,
+                index_current_player: 0,
                 dominos: DOMINOS,
             }
         }
@@ -279,10 +257,36 @@ pub mod engine {
             while !finished && round_number <= MAX_ROUND {
                 round_number += 1;
                 for player in self.players.iter() {
-                    println!("{} state, total {}", player.name, player.state.total)
+                    println!("{} state, total {}", player.name, player.state.total())
                 }
             }
             println!("Game end");
+        }
+
+        fn draw(&mut self, last_dice_draw: DiceDraw) -> Result<&'static str, &'static str> {
+            let current_player = &mut self.players[self.index_current_player];
+            if current_player
+                .state
+                .dice_drawn
+                .iter()
+                .any(|dice_draw| dice_draw.dice.label == last_dice_draw.dice.label)
+            {
+                return Err("This kind of die is already drawn by the player");
+            }
+
+            current_player.state.dice_drawn.push(last_dice_draw);
+            return Ok("Draw completed");
+        }
+        fn roll(&mut self) -> Vec<dice::Die> {
+            let current_player = &mut self.players[self.index_current_player];
+            let dice_count = current_player.state.drawable_dice_count();
+
+            let mut dice_roll: Vec<dice::Die> = Vec::with_capacity(dice_count);
+            for _ in [0..dice_count] {
+                dice_roll.push(dice::Die::roll());
+            }
+            dice_roll.sort_unstable_by_key(|die| die.value); // make things pretty to use
+            dice_roll
         }
     }
 }
