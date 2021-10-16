@@ -1,316 +1,386 @@
 use std::io;
 
-pub mod dice {
-    use rand::Rng;
-    use std::fmt;
+use rand::Rng;
+use std::fmt;
 
-    pub const DICE_COUNT: usize = 8;
+pub const DICE_COUNT: usize = 8;
 
-    #[derive(Debug, PartialEq)]
-    pub enum DieLabel {
-        One = 1,
-        Two = 2,
-        Three = 3,
-        Four = 4,
-        Five = 5,
-        Maggot = 6,
-    }
+#[derive(Clone, Debug, PartialEq)]
+pub enum DieLabel {
+    One = 1,
+    Two = 2,
+    Three = 3,
+    Four = 4,
+    Five = 5,
+    Maggot = 6,
+}
 
-    #[derive(Debug)]
-    pub struct Die {
-        pub label: DieLabel,
-        pub value: u8,
-    }
-
-    impl fmt::Display for Die {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "{:?}", self.label)
-        }
-    }
-
-    impl Die {
-        pub fn roll() -> Die {
-            match rand::thread_rng().gen_range(1..=6) {
-                1 => Die {
-                    label: DieLabel::One,
-                    value: 1,
-                },
-                2 => Die {
-                    label: DieLabel::Two,
-                    value: 2,
-                },
-                3 => Die {
-                    label: DieLabel::Three,
-                    value: 3,
-                },
-                4 => Die {
-                    label: DieLabel::Four,
-                    value: 4,
-                },
-                5 => Die {
-                    label: DieLabel::Five,
-                    value: 5,
-                },
-                6 => Die {
-                    label: DieLabel::Maggot,
-                    value: 5,
-                },
-                _ => unreachable!(),
-            }
+impl DieLabel {
+    pub fn from(label: &str) -> DieLabel {
+        match label {
+            "one" => DieLabel::One,
+            "two" => DieLabel::Two,
+            "three" => DieLabel::Three,
+            "four" => DieLabel::Four,
+            "five" => DieLabel::Five,
+            "maggot" => DieLabel::Maggot,
+            _ => panic!("Wrong label"),
         }
     }
 }
 
-pub mod engine {
-    use crate::dice;
-    use std::fmt;
-    use std::io;
+#[derive(Clone, Debug)]
+pub struct Die {
+    pub label: DieLabel,
+    pub value: u8,
+}
 
-    const DOMINO_COUNT: usize = 16;
-    const DICE_COUNT: usize = 8;
-    const MAX_ROUND: usize = 1;
-
-    struct Domino {
-        label: u8,
-        value: u8,
-        active: bool,
+impl fmt::Display for Die {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.label)
     }
+}
 
-    impl fmt::Debug for Domino {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "{}", self.label)
+impl Die {
+    pub fn from(label: &DieLabel) -> Die {
+        match label {
+            DieLabel::One => Die {
+                label: DieLabel::One,
+                value: 1,
+            },
+            DieLabel::Two => Die {
+                label: DieLabel::Two,
+                value: 2,
+            },
+            DieLabel::Three => Die {
+                label: DieLabel::Three,
+                value: 3,
+            },
+            DieLabel::Four => Die {
+                label: DieLabel::Four,
+                value: 4,
+            },
+            DieLabel::Five => Die {
+                label: DieLabel::Five,
+                value: 5,
+            },
+            DieLabel::Maggot => Die {
+                label: DieLabel::Maggot,
+                value: 5,
+            },
         }
     }
 
-    #[derive(Debug)]
-    struct DiceDraw {
-        dice: dice::Die,
-        count: u8,
-    }
-
-    #[derive(Debug)]
-    pub enum PlayerAction {
-        Roll,
-        Draw,
-        Surrend,
-    }
-
-    #[derive(Debug)]
-    struct PlayerState {
-        domino_stack: Vec<Domino>, // a player stack can contains at most the total number of domino
-        dice_drawn: Vec<DiceDraw>,
-    }
-
-    impl PlayerState {
-        fn init() -> PlayerState {
-            PlayerState {
-                domino_stack: Vec::with_capacity(DOMINO_COUNT),
-                dice_drawn: Vec::with_capacity(DICE_COUNT),
-            }
-        }
-        fn total(&self) -> u8 {
-            let mut total: u8 = 0;
-            for dice_draw in self.dice_drawn.iter() {
-                total += dice_draw.count * dice_draw.dice.value;
-            }
-            total
-        }
-        fn drawable_dice_count(&self) -> usize {
-            DICE_COUNT - self.dice_drawn.len()
+    pub fn roll() -> Die {
+        match rand::thread_rng().gen_range(1..=6) {
+            1 => Die {
+                label: DieLabel::One,
+                value: 1,
+            },
+            2 => Die {
+                label: DieLabel::Two,
+                value: 2,
+            },
+            3 => Die {
+                label: DieLabel::Three,
+                value: 3,
+            },
+            4 => Die {
+                label: DieLabel::Four,
+                value: 4,
+            },
+            5 => Die {
+                label: DieLabel::Five,
+                value: 5,
+            },
+            6 => Die {
+                label: DieLabel::Maggot,
+                value: 5,
+            },
+            _ => unreachable!(),
         }
     }
+}
 
-    #[derive(Debug)]
-    struct Player {
-        name: String,
-        state: PlayerState,
-        is_bot: bool,
+struct PrintVecDie(Vec<Die>);
+impl fmt::Display for PrintVecDie {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut sorted_dice = self.0.to_vec(); // copy vector
+        sorted_dice.sort_unstable_by_key(|die| die.value); // sort it
+        for die in sorted_dice {
+            write!(f, "{:?} ", die.label)?
+        }
+        Ok(())
+    }
+}
+
+const DOMINO_COUNT: usize = 16;
+const MAX_ROUND: usize = 1;
+
+struct Domino {
+    label: u8,
+    value: u8,
+    active: bool,
+}
+
+impl fmt::Debug for Domino {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.label)
+    }
+}
+
+#[derive(Debug)]
+pub enum PlayerAction {
+    Roll,
+    Draw,
+    Surrend,
+}
+
+#[derive(Debug)]
+struct PlayerState {
+    domino_stack: Vec<Domino>, // a player stack can contains at most the total number of domino
+    dice_drawn: Vec<Die>,      // dice already drawn
+}
+
+impl PlayerState {
+    fn init() -> PlayerState {
+        PlayerState {
+            domino_stack: Vec::with_capacity(DOMINO_COUNT),
+            dice_drawn: Vec::with_capacity(DICE_COUNT),
+        }
+    }
+    fn dice_total(&self) -> u8 {
+        let mut total: u8 = 0;
+        for die in self.dice_drawn.iter() {
+            total += die.value;
+        }
+        total
+    }
+    fn rollable_dice_count(&self) -> usize {
+        DICE_COUNT - self.dice_drawn.len()
+    }
+}
+
+#[derive(Debug)]
+pub struct Player {
+    name: String,
+    state: PlayerState,
+}
+
+pub struct GameState {
+    players: Vec<Player>,
+    index_current_player: usize, // index in players Vector of the current player
+    dominos: [Domino; DOMINO_COUNT],
+    finished: bool,
+    round_number: usize,
+}
+
+const DOMINOS: [Domino; 16] = [
+    Domino {
+        label: 21,
+        value: 1,
+        active: true,
+    },
+    Domino {
+        label: 22,
+        value: 1,
+        active: true,
+    },
+    Domino {
+        label: 23,
+        value: 1,
+        active: true,
+    },
+    Domino {
+        label: 24,
+        value: 1,
+        active: true,
+    },
+    Domino {
+        label: 25,
+        value: 2,
+        active: true,
+    },
+    Domino {
+        label: 26,
+        value: 2,
+        active: true,
+    },
+    Domino {
+        label: 27,
+        value: 2,
+        active: true,
+    },
+    Domino {
+        label: 28,
+        value: 2,
+        active: true,
+    },
+    Domino {
+        label: 29,
+        value: 3,
+        active: true,
+    },
+    Domino {
+        label: 30,
+        value: 3,
+        active: true,
+    },
+    Domino {
+        label: 31,
+        value: 3,
+        active: true,
+    },
+    Domino {
+        label: 32,
+        value: 3,
+        active: true,
+    },
+    Domino {
+        label: 33,
+        value: 4,
+        active: true,
+    },
+    Domino {
+        label: 34,
+        value: 4,
+        active: true,
+    },
+    Domino {
+        label: 35,
+        value: 4,
+        active: true,
+    },
+    Domino {
+        label: 36,
+        value: 4,
+        active: true,
+    },
+];
+
+const MAX_SIZE_PLAYER_NAME: usize = 50;
+
+pub fn parse_player_name() -> String {
+    println!("Enter player name");
+
+    let mut player_name = String::with_capacity(MAX_SIZE_PLAYER_NAME);
+    io::stdin()
+        .read_line(&mut player_name)
+        .expect("Failed to read player name");
+
+    String::from(player_name.trim())
+}
+
+pub fn parse_action_input(state: &mut GameState) {}
+
+pub fn _roll_dice(number_dice: usize) -> Vec<Die> {
+    let mut dice = Vec::with_capacity(number_dice);
+    for _ in 0..number_dice {
+        dice.push(Die::roll())
+    }
+    dice
+}
+
+impl GameState {
+    pub fn init(player_count: usize) -> GameState {
+        let mut players = Vec::with_capacity(player_count);
+        for i in 0..player_count {
+            let player_name = parse_player_name();
+            players.push(Player {
+                name: player_name,
+                state: PlayerState::init(),
+            });
+
+            println!("{:?}", players[i]);
+        }
+
+        GameState {
+            players: players,
+            index_current_player: 0,
+            dominos: DOMINOS,
+            finished: false,
+            round_number: 0,
+        }
     }
 
-    pub struct GameState {
-        players: Vec<Player>,
-        index_current_player: usize, // index in players Vector of the current player
-        dominos: [Domino; DOMINO_COUNT],
+    pub fn is_finished(&self) -> bool {
+        !self.finished && self.round_number <= MAX_ROUND
     }
 
-    const DOMINOS: [Domino; 16] = [
-        Domino {
-            label: 21,
-            value: 1,
-            active: true,
-        },
-        Domino {
-            label: 22,
-            value: 1,
-            active: true,
-        },
-        Domino {
-            label: 23,
-            value: 1,
-            active: true,
-        },
-        Domino {
-            label: 24,
-            value: 1,
-            active: true,
-        },
-        Domino {
-            label: 25,
-            value: 2,
-            active: true,
-        },
-        Domino {
-            label: 26,
-            value: 2,
-            active: true,
-        },
-        Domino {
-            label: 27,
-            value: 2,
-            active: true,
-        },
-        Domino {
-            label: 28,
-            value: 2,
-            active: true,
-        },
-        Domino {
-            label: 29,
-            value: 3,
-            active: true,
-        },
-        Domino {
-            label: 30,
-            value: 3,
-            active: true,
-        },
-        Domino {
-            label: 31,
-            value: 3,
-            active: true,
-        },
-        Domino {
-            label: 32,
-            value: 3,
-            active: true,
-        },
-        Domino {
-            label: 33,
-            value: 4,
-            active: true,
-        },
-        Domino {
-            label: 34,
-            value: 4,
-            active: true,
-        },
-        Domino {
-            label: 35,
-            value: 4,
-            active: true,
-        },
-        Domino {
-            label: 36,
-            value: 4,
-            active: true,
-        },
-    ];
+    pub fn select_next_player(&mut self) {
+        self.index_current_player = (self.index_current_player + 1) % self.players.len()
+    }
 
-    const MAX_SIZE_PLAYER_NAME: usize = 50;
+    pub fn roll_dice(&self) -> Vec<Die> {
+        let rollable_dice_count = self.players[self.index_current_player]
+            .state
+            .rollable_dice_count();
+        _roll_dice(rollable_dice_count)
+    }
 
-    pub fn parse_player_name() -> String {
-        println!("Enter player name");
+    pub fn draw(&mut self, dice: &Vec<Die>) {
+        println!("Select a die label");
+        let mut label = String::new();
 
-        let mut player_name = String::with_capacity(MAX_SIZE_PLAYER_NAME);
         io::stdin()
-            .read_line(&mut player_name)
-            .expect("Failed to read player name");
+            .read_line(&mut label)
+            .expect("Failed to read line");
+        let label = DieLabel::from(label.trim());
 
-        String::from(player_name.trim())
-    }
-
-    impl GameState {
-        pub fn init(player_count: usize) -> GameState {
-            let mut players = Vec::with_capacity(player_count);
-            for i in 0..player_count {
-                let player_name = parse_player_name();
-                players.push(Player {
-                    name: player_name,
-                    state: PlayerState::init(),
-                    is_bot: false,
-                });
-
-                println!("{:?}", players[i]);
-            }
-
-            GameState {
-                players: players,
-                index_current_player: 0,
-                dominos: DOMINOS,
-            }
-        }
-        pub fn run(&self) {
-            println!("Game start");
-            let finished = false;
-            let mut round_number = 0;
-
-            while !finished && round_number <= MAX_ROUND {
-                round_number += 1;
-                for player in self.players.iter() {
-                    println!("{} state, total {}", player.name, player.state.total())
+        let count = dice.iter().filter(|die| die.label == label).count();
+        match count {
+            0 => panic!("dice not proposed"),
+            _ => {
+                for _ in 0..count {
+                    self.players[self.index_current_player]
+                        .state
+                        .dice_drawn
+                        .push(Die::from(&label))
                 }
             }
-            println!("Game end");
         }
 
-        fn draw(&mut self, last_dice_draw: DiceDraw) -> Result<&'static str, &'static str> {
-            let current_player = &mut self.players[self.index_current_player];
-            if current_player
-                .state
-                .dice_drawn
-                .iter()
-                .any(|dice_draw| dice_draw.dice.label == last_dice_draw.dice.label)
-            {
-                return Err("This kind of die is already drawn by the player");
-            }
+        println!("{:?}", self.players[self.index_current_player])
+    }
+    pub fn play_current_player(&mut self) {
+        let rolled_dice = self.roll_dice();
+        println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
 
-            current_player.state.dice_drawn.push(last_dice_draw);
-            return Ok("Draw completed");
-        }
-        fn roll(&mut self) -> Vec<dice::Die> {
-            let current_player = &mut self.players[self.index_current_player];
-            let dice_count = current_player.state.drawable_dice_count();
+        println!("Select an action: draw");
+        let mut action = String::new();
 
-            let mut dice_roll: Vec<dice::Die> = Vec::with_capacity(dice_count);
-            for _ in [0..dice_count] {
-                dice_roll.push(dice::Die::roll());
+        io::stdin()
+            .read_line(&mut action)
+            .expect("Failed to read line");
+
+        match action.trim() {
+            "draw" => {
+                println!("draw");
+                self.draw(&rolled_dice)
             }
-            dice_roll.sort_unstable_by_key(|die| die.value); // make things pretty to use
-            dice_roll
+            _ => panic!("unknown action"),
         }
     }
-}
+    pub fn run(&mut self) {
+        println!("Game start");
 
-// pub mod cli {
-//     pub fn parse_action_input(action: &str) -> Option<PlayerAction> {
-//         match action {
-//             "1" => Some(PlayerAction::Draw),
-//             "2" => Some(PlayerAction::Roll),
-//             "3" => Some(PlayerAction::Surrend),
-//             _ => {
-//                 println!("Invalid action number");
-//                 None
-//             }
-//         }
-//     }
-// }
+        while self.is_finished() {
+            self.round_number += 1;
+            self.select_next_player();
+            self.play_current_player();
+
+            self.finished = true; // to test
+        }
+        println!("Game end");
+    }
+}
 
 fn main() {
     /////////////// The actual main function ///////////////
     const PLAYER_MAX_COUNT: usize = 8;
     let player_count = parse_number_player(PLAYER_MAX_COUNT);
 
-    let game = engine::GameState::init(player_count);
+    let mut game = GameState::init(player_count);
     game.run();
 }
 
