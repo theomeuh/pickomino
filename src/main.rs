@@ -318,28 +318,47 @@ impl GameState {
         _roll_dice(rollable_dice_count)
     }
 
+    pub fn add_dice_to_current_player(&mut self, count: usize, label: &DieLabel) {
+        for _ in 0..count {
+            self.players[self.index_current_player]
+                .state
+                .dice_drawn
+                .push(Die::from(label))
+        }
+    }
+
+    pub fn count_pickable_dice(&self, dice: &Vec<Die>, label: &DieLabel) -> usize {
+        let count = dice.iter().filter(|die| &die.label == label).count();
+        if count == 0 {
+            panic!("dice not proposed");
+        }
+        if self.players[self.index_current_player]
+            .state
+            .dice_drawn
+            .iter()
+            .filter(|die| &die.label == label)
+            .count()
+            != 0
+        {
+            panic!("dice already drawn by player");
+        }
+        count
+    }
+
     pub fn draw(&mut self, dice: &Vec<Die>) {
+        // read input
         println!("Select a die label");
         let mut label = String::new();
-
         io::stdin()
             .read_line(&mut label)
             .expect("Failed to read line");
         let label = DieLabel::from(label.trim());
 
-        let count = dice.iter().filter(|die| die.label == label).count();
-        match count {
-            0 => panic!("dice not proposed"),
-            _ => {
-                for _ in 0..count {
-                    self.players[self.index_current_player]
-                        .state
-                        .dice_drawn
-                        .push(Die::from(&label))
-                }
-            }
-        }
+        // make stuff
+        let count = self.count_pickable_dice(dice, &label);
+        self.add_dice_to_current_player(count, &label);
 
+        // print current state
         println!("{:?}", self.players[self.index_current_player])
     }
     pub fn play_current_player(&mut self) {
