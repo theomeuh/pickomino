@@ -18,12 +18,12 @@ pub enum DieLabel {
 impl DieLabel {
     pub fn from(label: &str) -> DieLabel {
         match label {
-            "one" => DieLabel::One,
-            "two" => DieLabel::Two,
-            "three" => DieLabel::Three,
-            "four" => DieLabel::Four,
-            "five" => DieLabel::Five,
-            "maggot" => DieLabel::Maggot,
+            "one" | "One" => DieLabel::One,
+            "two" | "Two" => DieLabel::Two,
+            "three" | "Three" => DieLabel::Three,
+            "four" | "Four" => DieLabel::Four,
+            "five" | "Five" => DieLabel::Five,
+            "maggot" | "Maggot" => DieLabel::Maggot,
             _ => panic!("Wrong label"),
         }
     }
