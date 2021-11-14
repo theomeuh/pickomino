@@ -5,6 +5,93 @@ use std::fmt;
 
 pub const DICE_COUNT: usize = 8;
 
+const DOMINO_COUNT: usize = 16;
+const MAX_ROUND: usize = 10;
+const MAX_SIZE_PLAYER_NAME: usize = 50;
+const PLAYER_MAX_COUNT: usize = 8;
+const DOMINOS: [Domino; DOMINO_COUNT] = [
+    Domino {
+        label: 21,
+        value: 1,
+        pickable: true,
+    },
+    Domino {
+        label: 22,
+        value: 1,
+        pickable: true,
+    },
+    Domino {
+        label: 23,
+        value: 1,
+        pickable: true,
+    },
+    Domino {
+        label: 24,
+        value: 1,
+        pickable: true,
+    },
+    Domino {
+        label: 25,
+        value: 2,
+        pickable: true,
+    },
+    Domino {
+        label: 26,
+        value: 2,
+        pickable: true,
+    },
+    Domino {
+        label: 27,
+        value: 2,
+        pickable: true,
+    },
+    Domino {
+        label: 28,
+        value: 2,
+        pickable: true,
+    },
+    Domino {
+        label: 29,
+        value: 3,
+        pickable: true,
+    },
+    Domino {
+        label: 30,
+        value: 3,
+        pickable: true,
+    },
+    Domino {
+        label: 31,
+        value: 3,
+        pickable: true,
+    },
+    Domino {
+        label: 32,
+        value: 3,
+        pickable: true,
+    },
+    Domino {
+        label: 33,
+        value: 4,
+        pickable: true,
+    },
+    Domino {
+        label: 34,
+        value: 4,
+        pickable: true,
+    },
+    Domino {
+        label: 35,
+        value: 4,
+        pickable: true,
+    },
+    Domino {
+        label: 36,
+        value: 4,
+        pickable: true,
+    },
+];
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum DieLabel {
     One = 1,
@@ -113,9 +200,6 @@ impl fmt::Display for PrintVecDie {
         Ok(())
     }
 }
-
-const DOMINO_COUNT: usize = 16;
-const MAX_ROUND: usize = 10;
 
 struct Domino {
     label: u8,
@@ -264,91 +348,6 @@ pub struct GameState {
     finished: bool,
     round_number: usize,
 }
-
-const DOMINOS: [Domino; 16] = [
-    Domino {
-        label: 21,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 22,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 23,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 24,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 25,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 26,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 27,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 28,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 29,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 30,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 31,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 32,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 33,
-        value: 4,
-        pickable: true,
-    },
-    Domino {
-        label: 34,
-        value: 4,
-        pickable: true,
-    },
-    Domino {
-        label: 35,
-        value: 4,
-        pickable: true,
-    },
-    Domino {
-        label: 36,
-        value: 4,
-        pickable: true,
-    },
-];
-
-const MAX_SIZE_PLAYER_NAME: usize = 50;
 
 pub fn parse_player_name() -> String {
     println!("Enter player name");
@@ -508,6 +507,11 @@ impl GameState {
         println!("{:?}", self.current_player());
         println!("{:?}", self);
     }
+    pub fn compute_finished(&mut self) {
+        if self.round_number > 4 {
+            self.finished = true
+        }
+    }
     pub fn run(&mut self) {
         println!("Game start");
 
@@ -516,7 +520,7 @@ impl GameState {
             self.select_next_player();
             self.play_current_player();
 
-            // self.finished = true; // to test
+            self.compute_finished()
         }
         println!("Game end");
     }
@@ -524,7 +528,6 @@ impl GameState {
 
 fn main() {
     /////////////// The actual main function ///////////////
-    const PLAYER_MAX_COUNT: usize = 8;
     let player_count = parse_number_player(PLAYER_MAX_COUNT);
 
     let mut game = GameState::init(player_count);
