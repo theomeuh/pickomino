@@ -397,20 +397,26 @@ impl GameState {
         !self.finished && self.round_number <= MAX_ROUND
     }
 
+    pub fn current_player(&self) -> &Player {
+        &self.players[self.index_current_player]
+    }
+
+    pub fn current_player_mut(&mut self) -> &mut Player {
+        &mut self.players[self.index_current_player]
+    }
+
     pub fn select_next_player(&mut self) {
         self.index_current_player = (self.index_current_player + 1) % self.players.len()
     }
 
     pub fn roll_dice(&self) -> Vec<Die> {
-        let rollable_dice_count = self.players[self.index_current_player]
-            .state
-            .rollable_dice_count();
+        let rollable_dice_count = self.current_player().state.rollable_dice_count();
         _roll_dice(rollable_dice_count)
     }
 
     pub fn add_dice_to_current_player(&mut self, count: usize, label: &DieLabel) {
         for _ in 0..count {
-            self.players[self.index_current_player]
+            self.current_player_mut()
                 .state
                 .dice_drawn
                 .push(Die::from(label))
@@ -422,7 +428,8 @@ impl GameState {
         if count == 0 {
             panic!("dice not proposed");
         }
-        if self.players[self.index_current_player]
+        if self
+            .current_player()
             .state
             .dice_drawn
             .iter()
@@ -470,7 +477,7 @@ impl GameState {
         }
 
         // make the change
-        self.players[self.index_current_player]
+        self.current_player_mut()
             .state
             .domino_stack
             .push(Domino::from(domino_label));
@@ -498,7 +505,7 @@ impl GameState {
             _ => panic!("unknown action"),
         }
         // print current state
-        println!("{:?}", self.players[self.index_current_player]);
+        println!("{:?}", self.current_player());
         println!("{:?}", self);
     }
     pub fn run(&mut self) {
