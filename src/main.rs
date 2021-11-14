@@ -464,13 +464,17 @@ impl GameState {
             .position(|domino| domino.label == domino_label)
             .unwrap();
 
+        // validity check
+        if !self.dominos.get(domino_index).unwrap().pickable {
+            panic!("This domino is not pickable")
+        }
+
         // make the change
         self.players[self.index_current_player]
             .state
             .domino_stack
             .push(Domino::from(domino_label));
-        let domino_selected = self.dominos.get_mut(domino_index).unwrap();
-        domino_selected.pickable = false;
+        self.dominos.get_mut(domino_index).unwrap().pickable = false;
     }
     pub fn play_current_player(&mut self) {
         println!("Select an action: draw OR pick");
