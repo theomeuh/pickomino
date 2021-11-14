@@ -1,7 +1,8 @@
+use std::fmt;
 use std::io;
 
 use rand::Rng;
-use std::fmt;
+use std::result::Result;
 
 pub const DICE_COUNT: usize = 8;
 
@@ -91,6 +92,12 @@ const DOMINOS: [Domino; DOMINO_COUNT] = [
         pickable: true,
     },
 ];
+
+#[derive(Debug)]
+pub enum PickominoError {
+    NoDiceToRoll,
+    DominoTooBig,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum DieLabel {
@@ -454,13 +461,17 @@ impl GameState {
         let count = self.count_pickable_dice_by_label(dice, &label);
         self.add_dice_to_current_player(count, &label);
     }
-    pub fn draw_dice(&mut self) {
+    pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
         println!("'draw' selected");
+        if self.current_player().state.rollable_dice_count() == 0 {
+            return Err(PickominoError::NoDiceToRoll);
+        }
         let rolled_dice = self.roll_dice();
         println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
-        self._draw_dice(&rolled_dice)
+        self._draw_dice(&rolled_dice);
+        Ok(())
     }
-    pub fn _pick_domino(&mut self) {
+    pub fn _pick_domino(&mut self) -> Result<(), PickominoError> {
         // read input
         println!("Select a domino label");
         let mut domino_label = String::new();
@@ -468,6 +479,10 @@ impl GameState {
             .read_line(&mut domino_label)
             .expect("Failed to read line");
         let domino_label = domino_label.trim().parse::<u8>().unwrap();
+
+        if domino_label > self.current_player().state.dice_total() {
+            return Err(PickominoError::DominoTooBig);
+        }
 
         // find the domino
         let domino_index = self
@@ -487,23 +502,39 @@ impl GameState {
             .domino_stack
             .push(Domino::from(domino_label));
         self.dominos.get_mut(domino_index).unwrap().pickable = false;
+
+        Ok(())
     }
-    pub fn pick_domino(&mut self) {
+    pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
         println!("'pick' selected");
         self._pick_domino()
     }
     pub fn play_current_player(&mut self) {
-        println!("Select an action: draw OR pick");
-        let mut action = String::new();
+        loop {
+            println!("Select an action: draw OR pick");
+            let mut action = String::new();
 
-        io::stdin()
-            .read_line(&mut action)
-            .expect("Failed to read line");
+            io::stdin()
+                .read_line(&mut action)
+                .expect("Failed to read line");
 
-        match action.trim() {
-            "draw" | "d" => self.draw_dice(),
-            "pick" | "p" => self.pick_domino(),
-            _ => panic!("unknown action"),
+            match action.trim() {
+                "draw" | "d" => match self.draw_dice() {
+                    Err(message) => {
+                        println!("{:?}", message);
+                        continue;
+                    }
+                    _ => {}
+                },
+                "pick" | "p" => match self.pick_domino() {
+                    Err(message) => {
+                        println!("{:?}", message);
+                        continue;
+                    }
+                    _ => {}
+                },
+                _ => panic!("unknown action"),
+            }
         }
         // print current state
         println!("{:?}", self.current_player());
