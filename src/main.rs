@@ -441,7 +441,7 @@ impl GameState {
         count
     }
 
-    pub fn draw_dice(&mut self, dice: &Vec<Die>) {
+    pub fn _draw_dice(&mut self, dice: &Vec<Die>) {
         // read input
         println!("Select a die label");
         let mut label = String::new();
@@ -454,7 +454,13 @@ impl GameState {
         let count = self.count_pickable_dice_by_label(dice, &label);
         self.add_dice_to_current_player(count, &label);
     }
-    pub fn pick_domino(&mut self) {
+    pub fn draw_dice(&mut self) {
+        println!("'draw' selected");
+        let rolled_dice = self.roll_dice();
+        println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
+        self._draw_dice(&rolled_dice)
+    }
+    pub fn _pick_domino(&mut self) {
         // read input
         println!("Select a domino label");
         let mut domino_label = String::new();
@@ -482,6 +488,10 @@ impl GameState {
             .push(Domino::from(domino_label));
         self.dominos.get_mut(domino_index).unwrap().pickable = false;
     }
+    pub fn pick_domino(&mut self) {
+        println!("'pick' selected");
+        self._pick_domino()
+    }
     pub fn play_current_player(&mut self) {
         println!("Select an action: draw OR pick");
         let mut action = String::new();
@@ -491,16 +501,8 @@ impl GameState {
             .expect("Failed to read line");
 
         match action.trim() {
-            "draw" | "d" => {
-                println!("'draw' selected");
-                let rolled_dice = self.roll_dice();
-                println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
-                self.draw_dice(&rolled_dice)
-            }
-            "pick" | "p" => {
-                println!("'pick' selected");
-                self.pick_domino()
-            }
+            "draw" | "d" => self.draw_dice(),
+            "pick" | "p" => self.pick_domino(),
             _ => panic!("unknown action"),
         }
         // print current state
