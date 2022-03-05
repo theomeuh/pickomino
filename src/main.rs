@@ -392,7 +392,7 @@ impl GameState {
     pub fn init(player_count: usize) -> GameState {
         let mut players = Vec::with_capacity(player_count);
         for i in 0..player_count {
-            println!("Enter name of player {:?}", (i+1));
+            println!("Enter name of player {:?}", (i + 1));
             let player_name = parse_player_name();
             players.push(Player {
                 name: player_name,
@@ -544,12 +544,13 @@ impl GameState {
                     println!("{:?}", message);
                     continue;
                 }
-                _ => {}
+                _ => {
+                    // print current state
+                    println!("{:?}", self.current_player());
+                    println!("{:?}", self);
+                }
             }
         }
-        // print current state
-        println!("{:?}", self.current_player());
-        println!("{:?}", self);
     }
     pub fn compute_finished(&mut self) {
         if self.round_number > 4 {
