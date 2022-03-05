@@ -370,8 +370,6 @@ pub struct GameState {
 }
 
 pub fn parse_player_name() -> String {
-    println!("Enter player name");
-
     let mut player_name = String::with_capacity(MAX_SIZE_PLAYER_NAME);
     io::stdin()
         .read_line(&mut player_name)
@@ -394,6 +392,7 @@ impl GameState {
     pub fn init(player_count: usize) -> GameState {
         let mut players = Vec::with_capacity(player_count);
         for i in 0..player_count {
+            println!("Enter name of player {:?}", (i+1));
             let player_name = parse_player_name();
             players.push(Player {
                 name: player_name,
