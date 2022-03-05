@@ -475,6 +475,7 @@ impl GameState {
             let label = match DieLabel::from(label.trim()) {
                 Ok(label) => label,
                 Err(_) => {
+                    print_seperator_shell();
                     println!("Wrong Die Label");
                     continue;
                 }
@@ -495,6 +496,7 @@ impl GameState {
     }
     pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
         println!("'draw' selected");
+        print_seperator_shell();
         if self.current_player().state.rollable_dice_count() == 0 {
             return Err(PickominoError::NoDiceToRoll);
         }
@@ -545,7 +547,9 @@ impl GameState {
         self._pick_domino()
     }
     pub fn play_current_player(&mut self) {
+        clear_shell();
         loop {
+            print_seperator_shell();
             println!("Select an action: draw OR pick");
             let mut action = String::new();
 
@@ -615,4 +619,14 @@ pub fn parse_number_player(max_player: usize) -> usize {
         };
         println!("Please enter valid number");
     }
+}
+
+pub fn clear_shell() {
+    // print special shell caracter to clear a shell
+    print!("\x1B[2J");
+}
+
+pub fn print_seperator_shell() {
+    // use to separate group of message
+    println!("--------------------------------");
 }
