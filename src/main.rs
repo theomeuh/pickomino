@@ -465,6 +465,7 @@ impl GameState {
     pub fn _draw_dice(&mut self, dice: &Vec<Die>) {
         loop {
             // read input
+            println!("You rolled {}", PrintVecDie(dice.clone()));
             println!("Select a die label");
             let mut label = String::new();
             io::stdin()
@@ -491,7 +492,6 @@ impl GameState {
             return Err(PickominoError::NoDiceToRoll);
         }
         let rolled_dice = self.roll_dice();
-        println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
         self._draw_dice(&rolled_dice);
         Ok(())
     }
