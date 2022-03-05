@@ -553,7 +553,10 @@ impl GameState {
             let action_result = match action.trim() {
                 "draw" | "d" => self.draw_dice(),
                 "pick" | "p" => self.pick_domino(),
-                _ => panic!("unknown action"),
+                _ => {
+                    println!("Unknown action");
+                    continue;
+                }
             };
             match action_result {
                 Err(message) => {
