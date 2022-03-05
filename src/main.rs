@@ -553,7 +553,7 @@ impl GameState {
             };
             match action_result {
                 Err(message) => {
-                    println!("{:?}", message);
+                    println!("Error: {:?}", message);
                     continue;
                 }
                 _ => {
