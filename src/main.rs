@@ -353,6 +353,21 @@ impl PlayerState {
     fn rollable_dice_count(&self) -> usize {
         DICE_COUNT - self.dice_drawn.len()
     }
+    fn has_maggot(&self) -> bool {
+        for die in self.dice_drawn.iter() {
+            if die.label == DieLabel::Maggot {
+                return true;
+            }
+        }
+        return false;
+    }
+    fn domino_total(&self) -> u8 {
+        let mut total: u8 = 0;
+        for domino in self.domino_stack.iter() {
+            total += domino.value;
+        }
+        total
+    }
 }
 
 #[derive(Debug)]
@@ -440,6 +455,15 @@ impl GameState {
                 .dice_drawn
                 .push(Die::from(label))
         }
+    }
+
+    pub fn println_pickable_dominos(&self) {
+        for domino in self.dominos.iter() {
+            if domino.pickable {
+                print!("{:?} ", domino.label)
+            }
+        }
+        println!()
     }
 
     pub fn count_pickable_dice_by_label(&self, dice: &Vec<Die>, label: &DieLabel) -> usize {
@@ -546,12 +570,30 @@ impl GameState {
         );
         self._pick_domino()
     }
+    pub fn show_current_player_state(&self) {
+        println!();
+        println!(
+            "Remaining dice to draw {:?}",
+            self.current_player().state.rollable_dice_count()
+        );
+        println!(
+            "Total of collected dice: {:?}",
+            self.current_player().state.dice_total()
+        );
+        println!("Has Maggot: {:?}", self.current_player().state.has_maggot());
+        println!(
+            "Total of collected domino: {:?}",
+            self.current_player().state.domino_total()
+        );
+        println!("Available domino on the board game");
+        self.println_pickable_dominos();
+    }
     pub fn play_current_player(&mut self) {
         clear_shell();
         loop {
             print_seperator_shell();
             println!(
-                "{:} please, select an action: draw OR pick",
+                "{:} please, select an action: draw OR pick OR show",
                 self.current_player().name
             );
             let mut action = String::new();
@@ -563,6 +605,10 @@ impl GameState {
             let action_result = match action.trim() {
                 "draw" | "d" => self.draw_dice(),
                 "pick" | "p" => self.pick_domino(),
+                "show" | "s" => {
+                    self.show_current_player_state();
+                    continue;
+                }
                 _ => {
                     println!("Unknown action");
                     continue;
