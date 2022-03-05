@@ -127,6 +127,7 @@ impl DieLabel {
 pub struct Die {
     pub label: DieLabel,
     pub value: u8,
+    pub sort_value: u8,
 }
 
 impl fmt::Display for Die {
@@ -141,26 +142,32 @@ impl Die {
             DieLabel::One => Die {
                 label: DieLabel::One,
                 value: 1,
+                sort_value: 1,
             },
             DieLabel::Two => Die {
                 label: DieLabel::Two,
                 value: 2,
+                sort_value: 2,
             },
             DieLabel::Three => Die {
                 label: DieLabel::Three,
                 value: 3,
+                sort_value: 3,
             },
             DieLabel::Four => Die {
                 label: DieLabel::Four,
                 value: 4,
+                sort_value: 4,
             },
             DieLabel::Five => Die {
                 label: DieLabel::Five,
                 value: 5,
+                sort_value: 5,
             },
             DieLabel::Maggot => Die {
                 label: DieLabel::Maggot,
                 value: 5,
+                sort_value: 6,
             },
         }
     }
@@ -170,26 +177,32 @@ impl Die {
             1 => Die {
                 label: DieLabel::One,
                 value: 1,
+                sort_value: 1,
             },
             2 => Die {
                 label: DieLabel::Two,
                 value: 2,
+                sort_value: 2,
             },
             3 => Die {
                 label: DieLabel::Three,
                 value: 3,
+                sort_value: 3,
             },
             4 => Die {
                 label: DieLabel::Four,
                 value: 4,
+                sort_value: 4,
             },
             5 => Die {
                 label: DieLabel::Five,
                 value: 5,
+                sort_value: 5,
             },
             6 => Die {
                 label: DieLabel::Maggot,
                 value: 5,
+                sort_value: 6,
             },
             _ => unreachable!(),
         }
@@ -200,7 +213,7 @@ struct PrintVecDie(Vec<Die>);
 impl fmt::Display for PrintVecDie {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut sorted_dice = self.0.to_vec(); // copy vector
-        sorted_dice.sort_unstable_by_key(|die| die.value); // sort it
+        sorted_dice.sort_unstable_by_key(|die| die.sort_value); // sort it
         for die in sorted_dice {
             write!(f, "{:?} ", die.label)?
         }
@@ -507,6 +520,10 @@ impl GameState {
     }
     pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
         println!("'pick' selected");
+        println!(
+            "You can pick a domino up to {:?}",
+            self.current_player().state.dice_total()
+        );
         self._pick_domino()
     }
     pub fn play_current_player(&mut self) {
@@ -518,22 +535,17 @@ impl GameState {
                 .read_line(&mut action)
                 .expect("Failed to read line");
 
-            match action.trim() {
-                "draw" | "d" => match self.draw_dice() {
-                    Err(message) => {
-                        println!("{:?}", message);
-                        continue;
-                    }
-                    _ => {}
-                },
-                "pick" | "p" => match self.pick_domino() {
-                    Err(message) => {
-                        println!("{:?}", message);
-                        continue;
-                    }
-                    _ => {}
-                },
+            let action_result = match action.trim() {
+                "draw" | "d" => self.draw_dice(),
+                "pick" | "p" => self.pick_domino(),
                 _ => panic!("unknown action"),
+            };
+            match action_result {
+                Err(message) => {
+                    println!("{:?}", message);
+                    continue;
+                }
+                _ => {}
             }
         }
         // print current state
