@@ -445,7 +445,7 @@ impl GameState {
         // count how many die have the label in the last draw
         let count = dice.iter().filter(|die| &die.label == label).count();
         if count == 0 {
-            panic!("dice not proposed");
+            return 0;
         }
         // check if the dice selected have already been drawn by the current player
         if self
@@ -457,23 +457,33 @@ impl GameState {
             .count()
             != 0
         {
-            panic!("dice already drawn by player");
+            return 0;
         }
         count
     }
 
     pub fn _draw_dice(&mut self, dice: &Vec<Die>) {
-        // read input
-        println!("Select a die label");
-        let mut label = String::new();
-        io::stdin()
-            .read_line(&mut label)
-            .expect("Failed to read line");
-        let label = DieLabel::from(label.trim());
+        loop {
+            // read input
+            println!("Select a die label");
+            let mut label = String::new();
+            io::stdin()
+                .read_line(&mut label)
+                .expect("Failed to read line");
+            let label = DieLabel::from(label.trim());
 
-        // make stuff
-        let count = self.count_pickable_dice_by_label(dice, &label);
-        self.add_dice_to_current_player(count, &label);
+            // make stuff
+            let count = self.count_pickable_dice_by_label(dice, &label);
+            if count == 0 {
+                // loop if no die can be drawn
+                println!("Dice '{:?}' cannot be drawn", label);
+                continue;
+            } else {
+                // break if there is dice drawn
+                self.add_dice_to_current_player(count, &label);
+                break;
+            }
+        }
     }
     pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
         println!("'draw' selected");
