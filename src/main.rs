@@ -442,10 +442,12 @@ impl GameState {
     }
 
     pub fn count_pickable_dice_by_label(&self, dice: &Vec<Die>, label: &DieLabel) -> usize {
+        // count how many die have the label in the last draw
         let count = dice.iter().filter(|die| &die.label == label).count();
         if count == 0 {
             panic!("dice not proposed");
         }
+        // check if the dice selected have already been drawn by the current player
         if self
             .current_player()
             .state
