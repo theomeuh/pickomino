@@ -474,7 +474,10 @@ impl GameState {
                 .expect("Failed to read line");
             let label = match DieLabel::from(label.trim()) {
                 Ok(label) => label,
-                Err(_) => continue,
+                Err(_) => {
+                    println!("Wrong Die Label");
+                    continue;
+                }
             };
 
             // make stuff
@@ -563,11 +566,7 @@ impl GameState {
                     println!("Error: {:?}", message);
                     continue;
                 }
-                _ => {
-                    // print current state
-                    println!("{:?}", self.current_player());
-                    println!("{:?}", self);
-                }
+                _ => {}
             }
         }
     }
