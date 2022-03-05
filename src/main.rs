@@ -550,7 +550,10 @@ impl GameState {
         clear_shell();
         loop {
             print_seperator_shell();
-            println!("Select an action: draw OR pick");
+            println!(
+                "{:} please, select an action: draw OR pick",
+                self.current_player().name
+            );
             let mut action = String::new();
 
             io::stdin()
