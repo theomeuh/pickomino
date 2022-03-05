@@ -569,11 +569,13 @@ impl GameState {
                 }
             };
             match action_result {
+                // re-ask action if previous action went bad
                 Err(message) => {
                     println!("Error: {:?}", message);
                     continue;
                 }
-                _ => {}
+                // leave the loop if the action went well
+                _ => break,
             }
         }
     }
@@ -587,8 +589,8 @@ impl GameState {
 
         while self.is_finished() {
             self.round_number += 1;
-            self.select_next_player();
             self.play_current_player();
+            self.select_next_player();
 
             self.compute_finished()
         }
