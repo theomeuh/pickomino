@@ -96,6 +96,7 @@ const DOMINOS: [Domino; DOMINO_COUNT] = [
 #[derive(Debug)]
 pub enum PickominoError {
     NoDiceToRoll,
+    UnknownDiceLabel,
     DominoTooBig,
 }
 
@@ -110,15 +111,15 @@ pub enum DieLabel {
 }
 
 impl DieLabel {
-    pub fn from(label: &str) -> DieLabel {
+    pub fn from(label: &str) -> Result<DieLabel, PickominoError> {
         match label {
-            "one" | "One" => DieLabel::One,
-            "two" | "Two" => DieLabel::Two,
-            "three" | "Three" => DieLabel::Three,
-            "four" | "Four" => DieLabel::Four,
-            "five" | "Five" => DieLabel::Five,
-            "maggot" | "Maggot" => DieLabel::Maggot,
-            _ => panic!("Wrong label"),
+            "one" | "One" => Ok(DieLabel::One),
+            "two" | "Two" => Ok(DieLabel::Two),
+            "three" | "Three" => Ok(DieLabel::Three),
+            "four" | "Four" => Ok(DieLabel::Four),
+            "five" | "Five" => Ok(DieLabel::Five),
+            "maggot" | "Maggot" => Ok(DieLabel::Maggot),
+            _ => Err(PickominoError::DominoTooBig),
         }
     }
 }
@@ -471,7 +472,10 @@ impl GameState {
             io::stdin()
                 .read_line(&mut label)
                 .expect("Failed to read line");
-            let label = DieLabel::from(label.trim());
+            let label = match DieLabel::from(label.trim()) {
+                Ok(label) => label,
+                Err(_) => continue,
+            };
 
             // make stuff
             let count = self.count_pickable_dice_by_label(dice, &label);
