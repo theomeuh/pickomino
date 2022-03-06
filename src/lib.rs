@@ -7,89 +7,193 @@ const MAX_SIZE_PLAYER_NAME: usize = 50;
 
 pub const DICE_COUNT: usize = 8;
 
-const DOMINO_COUNT: usize = 16;
-const DOMINOS: [Domino; DOMINO_COUNT] = [
-    Domino {
-        label: 21,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 22,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 23,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 24,
-        value: 1,
-        pickable: true,
-    },
-    Domino {
-        label: 25,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 26,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 27,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 28,
-        value: 2,
-        pickable: true,
-    },
-    Domino {
-        label: 29,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 30,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 31,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 32,
-        value: 3,
-        pickable: true,
-    },
-    Domino {
-        label: 33,
-        value: 4,
-        pickable: true,
-    },
-    Domino {
-        label: 34,
-        value: 4,
-        pickable: true,
-    },
-    Domino {
-        label: 35,
-        value: 4,
-        pickable: true,
-    },
-    Domino {
-        label: 36,
-        value: 4,
-        pickable: true,
-    },
-];
+mod domino {
+    use std::fmt;
+
+    pub const DOMINO_COUNT: usize = 16;
+    pub const DOMINOS: [Domino; DOMINO_COUNT] = [
+        Domino {
+            label: 21,
+            value: 1,
+            pickable: true,
+        },
+        Domino {
+            label: 22,
+            value: 1,
+            pickable: true,
+        },
+        Domino {
+            label: 23,
+            value: 1,
+            pickable: true,
+        },
+        Domino {
+            label: 24,
+            value: 1,
+            pickable: true,
+        },
+        Domino {
+            label: 25,
+            value: 2,
+            pickable: true,
+        },
+        Domino {
+            label: 26,
+            value: 2,
+            pickable: true,
+        },
+        Domino {
+            label: 27,
+            value: 2,
+            pickable: true,
+        },
+        Domino {
+            label: 28,
+            value: 2,
+            pickable: true,
+        },
+        Domino {
+            label: 29,
+            value: 3,
+            pickable: true,
+        },
+        Domino {
+            label: 30,
+            value: 3,
+            pickable: true,
+        },
+        Domino {
+            label: 31,
+            value: 3,
+            pickable: true,
+        },
+        Domino {
+            label: 32,
+            value: 3,
+            pickable: true,
+        },
+        Domino {
+            label: 33,
+            value: 4,
+            pickable: true,
+        },
+        Domino {
+            label: 34,
+            value: 4,
+            pickable: true,
+        },
+        Domino {
+            label: 35,
+            value: 4,
+            pickable: true,
+        },
+        Domino {
+            label: 36,
+            value: 4,
+            pickable: true,
+        },
+    ];
+    pub struct Domino {
+        pub label: u8,
+        pub value: u8,
+        pub pickable: bool,
+    }
+
+    impl fmt::Debug for Domino {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "{} [pickable={}]", self.label, self.pickable)
+        }
+    }
+
+    impl Domino {
+        pub fn from(label: u8) -> Domino {
+            match label {
+                // find shorter way to do this
+                21 => Domino {
+                    label: 21,
+                    value: 1,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                22 => Domino {
+                    label: 22,
+                    value: 1,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                23 => Domino {
+                    label: 23,
+                    value: 1,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                24 => Domino {
+                    label: 24,
+                    value: 1,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                25 => Domino {
+                    label: 25,
+                    value: 2,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                26 => Domino {
+                    label: 26,
+                    value: 2,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                27 => Domino {
+                    label: 27,
+                    value: 2,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                28 => Domino {
+                    label: 28,
+                    value: 2,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                29 => Domino {
+                    label: 29,
+                    value: 3,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                30 => Domino {
+                    label: 30,
+                    value: 3,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                31 => Domino {
+                    label: 31,
+                    value: 3,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                32 => Domino {
+                    label: 32,
+                    value: 3,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                33 => Domino {
+                    label: 33,
+                    value: 4,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                34 => Domino {
+                    label: 34,
+                    value: 4,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                35 => Domino {
+                    label: 35,
+                    value: 4,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                36 => Domino {
+                    label: 36,
+                    value: 4,
+                    pickable: true, // not relevant for a "Player Domino". Need refactor Domino handling
+                },
+                _ => panic!("Wrong label"),
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum PickominoError {
@@ -221,117 +325,16 @@ impl fmt::Display for PrintVecDie {
     }
 }
 
-struct Domino {
-    label: u8,
-    value: u8,
-    pickable: bool,
-}
-
-impl fmt::Debug for Domino {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} [pickable={}]", self.label, self.pickable)
-    }
-}
-
-impl Domino {
-    pub fn from(label: u8) -> Domino {
-        match label {
-            // find shorter way to do this
-            21 => Domino {
-                label: 21,
-                value: 1,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            22 => Domino {
-                label: 22,
-                value: 1,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            23 => Domino {
-                label: 23,
-                value: 1,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            24 => Domino {
-                label: 24,
-                value: 1,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            25 => Domino {
-                label: 25,
-                value: 2,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            26 => Domino {
-                label: 26,
-                value: 2,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            27 => Domino {
-                label: 27,
-                value: 2,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            28 => Domino {
-                label: 28,
-                value: 2,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            29 => Domino {
-                label: 29,
-                value: 3,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            30 => Domino {
-                label: 30,
-                value: 3,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            31 => Domino {
-                label: 31,
-                value: 3,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            32 => Domino {
-                label: 32,
-                value: 3,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            33 => Domino {
-                label: 33,
-                value: 4,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            34 => Domino {
-                label: 34,
-                value: 4,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            35 => Domino {
-                label: 35,
-                value: 4,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            36 => Domino {
-                label: 36,
-                value: 4,
-                pickable: true, // not relevant for a "Player Domino". Need refacto Domino handling
-            },
-            _ => panic!("Wrong label"),
-        }
-    }
-}
-
 #[derive(Debug)]
 struct PlayerState {
-    domino_stack: Vec<Domino>, // a player stack can contains at most the total number of domino
-    dice_drawn: Vec<Die>,      // dice already drawn
+    domino_stack: Vec<domino::Domino>, // a player stack can contains at most the total number of domino
+    dice_drawn: Vec<Die>,              // dice already drawn
 }
 
 impl PlayerState {
     fn init() -> PlayerState {
         PlayerState {
-            domino_stack: Vec::with_capacity(DOMINO_COUNT),
+            domino_stack: Vec::with_capacity(domino::DOMINO_COUNT),
             dice_drawn: Vec::with_capacity(DICE_COUNT),
         }
     }
@@ -372,7 +375,7 @@ pub struct Player {
 pub struct GameState {
     players: Vec<Player>,
     index_current_player: usize, // index in players Vector of the current player
-    dominos: [Domino; DOMINO_COUNT],
+    dominos: [domino::Domino; domino::DOMINO_COUNT],
 }
 
 pub fn parse_player_name() -> String {
@@ -409,7 +412,7 @@ impl GameState {
         GameState {
             players: players,
             index_current_player: 0,
-            dominos: DOMINOS,
+            dominos: domino::DOMINOS,
         }
     }
 
@@ -554,7 +557,7 @@ impl GameState {
         self.current_player_mut()
             .state
             .domino_stack
-            .push(Domino::from(domino_value));
+            .push(domino::Domino::from(domino_value));
         self.dominos.get_mut(domino_index).unwrap().pickable = false;
 
         Ok(())
