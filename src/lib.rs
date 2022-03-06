@@ -1,6 +1,8 @@
 use std::io;
 use std::result::Result;
 
+pub const DICE_COUNT: usize = 8;
+
 #[derive(Debug)]
 pub enum PickominoError {
     NoDiceToRoll,
@@ -9,8 +11,257 @@ pub enum PickominoError {
     CancelAction,
 }
 
-const MAX_SIZE_PLAYER_NAME: usize = 50;
-pub const DICE_COUNT: usize = 8;
+#[derive(Debug)]
+pub struct GameState {
+    players: Vec<player::Player>,
+    index_current_player: usize, // index in players Vector of the current player
+    dominos: [domino::Domino; domino::DOMINO_COUNT],
+}
+
+impl GameState {
+    pub fn init(player_count: usize) -> GameState {
+        let mut players = Vec::with_capacity(player_count);
+        for i in 0..player_count {
+            println!("Enter name of player {:?}", (i + 1));
+            let player_name = player::parse_player_name();
+            players.push(player::Player {
+                name: player_name,
+                state: player::PlayerState::init(),
+            });
+
+            println!("{:?}", players[i]);
+        }
+
+        GameState {
+            players: players,
+            index_current_player: 0,
+            dominos: domino::DOMINOS,
+        }
+    }
+
+    pub fn current_player(&self) -> &player::Player {
+        &self.players[self.index_current_player]
+    }
+
+    pub fn current_player_mut(&mut self) -> &mut player::Player {
+        &mut self.players[self.index_current_player]
+    }
+
+    pub fn select_next_player(&mut self) {
+        self.index_current_player = (self.index_current_player + 1) % self.players.len()
+    }
+
+    pub fn roll_dice(&self) -> Vec<dice::Die> {
+        let rollable_dice_count = self.current_player().state.rollable_dice_count();
+        dice::roll_dice(rollable_dice_count)
+    }
+
+    pub fn add_dice_to_current_player(&mut self, count: usize, label: &dice::DieLabel) {
+        for _ in 0..count {
+            self.current_player_mut()
+                .state
+                .dice_drawn
+                .push(dice::Die::from(label))
+        }
+    }
+
+    pub fn println_pickable_dominos(&self) {
+        for domino in self.dominos.iter() {
+            if domino.pickable {
+                print!("{:?} ", domino.label)
+            }
+        }
+        println!()
+    }
+
+    pub fn count_pickable_dice_by_label(
+        &self,
+        dice: &Vec<dice::Die>,
+        label: &dice::DieLabel,
+    ) -> usize {
+        // count how many die have the label in the last draw
+        let count = dice.iter().filter(|die| &die.label == label).count();
+        if count == 0 {
+            return 0;
+        }
+        // check if the dice selected have already been drawn by the current player
+        if self
+            .current_player()
+            .state
+            .dice_drawn
+            .iter()
+            .filter(|die| &die.label == label)
+            .count()
+            != 0
+        {
+            return 0;
+        }
+        count
+    }
+
+    pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
+        println!("'draw' selected");
+        shell::print_seperator_shell();
+        if self.current_player().state.rollable_dice_count() == 0 {
+            return Err(PickominoError::NoDiceToRoll);
+        }
+        let rolled_dice = self.roll_dice();
+        loop {
+            // read input
+            println!("You rolled {}", dice::PrintVecDie(rolled_dice.clone()));
+            println!("Select a die label");
+            let mut label = String::new();
+            io::stdin()
+                .read_line(&mut label)
+                .expect("Failed to read line");
+            let label = match dice::DieLabel::from(label.trim()) {
+                Ok(label) => label,
+                Err(_) => {
+                    shell::print_seperator_shell();
+                    println!("Wrong Die Label");
+                    continue;
+                }
+            };
+
+            // make stuff
+            let count = self.count_pickable_dice_by_label(&rolled_dice, &label);
+            if count == 0 {
+                // loop if no die can be drawn
+                println!("Dice '{:?}' cannot be drawn", label);
+                continue;
+            } else {
+                // break if there is dice drawn
+                self.add_dice_to_current_player(count, &label);
+                break;
+            }
+        }
+        Ok(())
+    }
+    pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
+        println!("'pick' selected");
+        println!(
+            "You can pick a domino up to {:?}. Minimum is 21",
+            self.current_player().state.dice_total()
+        );
+
+        let mut domino_value: u8;
+        let mut domino_index: usize;
+        loop {
+            // read input
+            println!("Select a domino label or type 'cancel'");
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+
+            match input.trim() {
+                "cancel" | "c" => return Err(PickominoError::CancelAction),
+                _ => {}
+            }
+            domino_value = input.trim().parse::<u8>().unwrap();
+
+            if domino_value > self.current_player().state.dice_total() {
+                println!("You cannot pick this domino. Pick a lower one");
+                continue;
+            }
+
+            // find the domino on the board game
+            domino_index = self
+                .dominos
+                .iter()
+                .position(|domino| domino.label == domino_value)
+                .unwrap();
+
+            // validity check
+            if !self.dominos.get(domino_index).unwrap().pickable {
+                println!("This domino is not on the board. Pick another");
+                continue;
+            }
+            break;
+        }
+
+        // make the change
+        self.current_player_mut()
+            .state
+            .domino_stack
+            .push(domino::Domino::from(domino_value));
+        self.dominos.get_mut(domino_index).unwrap().pickable = false;
+
+        Ok(())
+    }
+    pub fn show_current_player_state(&self) {
+        println!();
+        println!(
+            "Remaining dice to draw {:?}",
+            self.current_player().state.rollable_dice_count()
+        );
+        println!(
+            "Total of collected dice: {:?}",
+            self.current_player().state.dice_total()
+        );
+        println!("Has Maggot: {:?}", self.current_player().state.has_maggot());
+        println!(
+            "Total of collected domino: {:?}",
+            self.current_player().state.domino_total()
+        );
+        println!("Available domino on the board game");
+        self.println_pickable_dominos();
+    }
+    pub fn play_current_player(&mut self) {
+        shell::clear_shell();
+        loop {
+            shell::print_seperator_shell();
+            println!(
+                "{:} please, select an action: draw OR pick OR show",
+                self.current_player().name
+            );
+            let mut action = String::new();
+
+            io::stdin()
+                .read_line(&mut action)
+                .expect("Failed to read line");
+
+            let action_result = match action.trim() {
+                "draw" | "d" => self.draw_dice(),
+                "pick" | "p" => self.pick_domino(),
+                "show" | "s" => {
+                    self.show_current_player_state();
+                    continue;
+                }
+                _ => {
+                    println!("Unknown action");
+                    continue;
+                }
+            };
+            match action_result {
+                // re-ask action if previous action went bad
+                Err(message) => {
+                    println!("Error: {:?}", message);
+                    continue;
+                }
+                // leave the loop if the action went well
+                _ => break,
+            }
+        }
+    }
+    pub fn is_finished(&self) -> bool {
+        for domino in self.dominos.iter() {
+            if domino.pickable == true {
+                return false;
+            }
+        }
+        return true;
+    }
+    pub fn run(&mut self) {
+        println!("Game start");
+
+        while !self.is_finished() {
+            self.play_current_player();
+            self.select_next_player();
+        }
+        println!("Game end");
+    }
+}
 
 mod domino {
     use std::fmt;
@@ -325,320 +576,74 @@ mod dice {
             Ok(())
         }
     }
+    pub fn roll_dice(number_dice: usize) -> Vec<Die> {
+        let mut dice = Vec::with_capacity(number_dice);
+        for _ in 0..number_dice {
+            dice.push(Die::roll())
+        }
+        dice
+    }
 }
 
-#[derive(Debug)]
-struct PlayerState {
-    domino_stack: Vec<domino::Domino>, // a player stack can contains at most the total number of domino
-    dice_drawn: Vec<dice::Die>,        // dice already drawn
-}
+mod player {
+    use crate::dice;
+    use crate::domino;
+    use std::io;
+    pub const MAX_SIZE_PLAYER_NAME: usize = 50;
 
-impl PlayerState {
-    fn init() -> PlayerState {
-        PlayerState {
-            domino_stack: Vec::with_capacity(domino::DOMINO_COUNT),
-            dice_drawn: Vec::with_capacity(DICE_COUNT),
-        }
+    #[derive(Debug)]
+    pub struct PlayerState {
+        pub domino_stack: Vec<domino::Domino>, // a player stack can contains at most the total number of domino
+        pub dice_drawn: Vec<dice::Die>,        // dice already drawn
     }
-    fn dice_total(&self) -> u8 {
-        let mut total: u8 = 0;
-        for die in self.dice_drawn.iter() {
-            total += die.value;
-        }
-        total
-    }
-    fn rollable_dice_count(&self) -> usize {
-        DICE_COUNT - self.dice_drawn.len()
-    }
-    fn has_maggot(&self) -> bool {
-        for die in self.dice_drawn.iter() {
-            if die.label == dice::DieLabel::Maggot {
-                return true;
+
+    impl PlayerState {
+        pub fn init() -> PlayerState {
+            PlayerState {
+                domino_stack: Vec::with_capacity(domino::DOMINO_COUNT),
+                dice_drawn: Vec::with_capacity(crate::DICE_COUNT),
             }
         }
-        return false;
-    }
-    fn domino_total(&self) -> u8 {
-        let mut total: u8 = 0;
-        for domino in self.domino_stack.iter() {
-            total += domino.value;
-        }
-        total
-    }
-}
-
-#[derive(Debug)]
-pub struct Player {
-    name: String,
-    state: PlayerState,
-}
-
-#[derive(Debug)]
-pub struct GameState {
-    players: Vec<Player>,
-    index_current_player: usize, // index in players Vector of the current player
-    dominos: [domino::Domino; domino::DOMINO_COUNT],
-}
-
-pub fn parse_player_name() -> String {
-    let mut player_name = String::with_capacity(MAX_SIZE_PLAYER_NAME);
-    io::stdin()
-        .read_line(&mut player_name)
-        .expect("Failed to read player name");
-
-    String::from(player_name.trim())
-}
-
-pub fn _roll_dice(number_dice: usize) -> Vec<dice::Die> {
-    let mut dice = Vec::with_capacity(number_dice);
-    for _ in 0..number_dice {
-        dice.push(dice::Die::roll())
-    }
-    dice
-}
-
-impl GameState {
-    pub fn init(player_count: usize) -> GameState {
-        let mut players = Vec::with_capacity(player_count);
-        for i in 0..player_count {
-            println!("Enter name of player {:?}", (i + 1));
-            let player_name = parse_player_name();
-            players.push(Player {
-                name: player_name,
-                state: PlayerState::init(),
-            });
-
-            println!("{:?}", players[i]);
-        }
-
-        GameState {
-            players: players,
-            index_current_player: 0,
-            dominos: domino::DOMINOS,
-        }
-    }
-
-    pub fn current_player(&self) -> &Player {
-        &self.players[self.index_current_player]
-    }
-
-    pub fn current_player_mut(&mut self) -> &mut Player {
-        &mut self.players[self.index_current_player]
-    }
-
-    pub fn select_next_player(&mut self) {
-        self.index_current_player = (self.index_current_player + 1) % self.players.len()
-    }
-
-    pub fn roll_dice(&self) -> Vec<dice::Die> {
-        let rollable_dice_count = self.current_player().state.rollable_dice_count();
-        _roll_dice(rollable_dice_count)
-    }
-
-    pub fn add_dice_to_current_player(&mut self, count: usize, label: &dice::DieLabel) {
-        for _ in 0..count {
-            self.current_player_mut()
-                .state
-                .dice_drawn
-                .push(dice::Die::from(label))
-        }
-    }
-
-    pub fn println_pickable_dominos(&self) {
-        for domino in self.dominos.iter() {
-            if domino.pickable {
-                print!("{:?} ", domino.label)
+        pub fn dice_total(&self) -> u8 {
+            let mut total: u8 = 0;
+            for die in self.dice_drawn.iter() {
+                total += die.value;
             }
+            total
         }
-        println!()
-    }
-
-    pub fn count_pickable_dice_by_label(
-        &self,
-        dice: &Vec<dice::Die>,
-        label: &dice::DieLabel,
-    ) -> usize {
-        // count how many die have the label in the last draw
-        let count = dice.iter().filter(|die| &die.label == label).count();
-        if count == 0 {
-            return 0;
+        pub fn rollable_dice_count(&self) -> usize {
+            crate::DICE_COUNT - self.dice_drawn.len()
         }
-        // check if the dice selected have already been drawn by the current player
-        if self
-            .current_player()
-            .state
-            .dice_drawn
-            .iter()
-            .filter(|die| &die.label == label)
-            .count()
-            != 0
-        {
-            return 0;
-        }
-        count
-    }
-
-    pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
-        println!("'draw' selected");
-        shell::print_seperator_shell();
-        if self.current_player().state.rollable_dice_count() == 0 {
-            return Err(PickominoError::NoDiceToRoll);
-        }
-        let rolled_dice = self.roll_dice();
-        loop {
-            // read input
-            println!("You rolled {}", dice::PrintVecDie(rolled_dice.clone()));
-            println!("Select a die label");
-            let mut label = String::new();
-            io::stdin()
-                .read_line(&mut label)
-                .expect("Failed to read line");
-            let label = match dice::DieLabel::from(label.trim()) {
-                Ok(label) => label,
-                Err(_) => {
-                    shell::print_seperator_shell();
-                    println!("Wrong Die Label");
-                    continue;
+        pub fn has_maggot(&self) -> bool {
+            for die in self.dice_drawn.iter() {
+                if die.label == dice::DieLabel::Maggot {
+                    return true;
                 }
-            };
-
-            // make stuff
-            let count = self.count_pickable_dice_by_label(&rolled_dice, &label);
-            if count == 0 {
-                // loop if no die can be drawn
-                println!("Dice '{:?}' cannot be drawn", label);
-                continue;
-            } else {
-                // break if there is dice drawn
-                self.add_dice_to_current_player(count, &label);
-                break;
             }
+            return false;
         }
-        Ok(())
-    }
-    pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
-        println!("'pick' selected");
-        println!(
-            "You can pick a domino up to {:?}. Minimum is 21",
-            self.current_player().state.dice_total()
-        );
-
-        let mut domino_value: u8;
-        let mut domino_index: usize;
-        loop {
-            // read input
-            println!("Select a domino label or type 'cancel'");
-            let mut input = String::new();
-            io::stdin()
-                .read_line(&mut input)
-                .expect("Failed to read line");
-
-            match input.trim() {
-                "cancel" | "c" => return Err(PickominoError::CancelAction),
-                _ => {}
+        pub fn domino_total(&self) -> u8 {
+            let mut total: u8 = 0;
+            for domino in self.domino_stack.iter() {
+                total += domino.value;
             }
-            domino_value = input.trim().parse::<u8>().unwrap();
-
-            if domino_value > self.current_player().state.dice_total() {
-                println!("You cannot pick this domino. Pick a lower one");
-                continue;
-            }
-
-            // find the domino on the board game
-            domino_index = self
-                .dominos
-                .iter()
-                .position(|domino| domino.label == domino_value)
-                .unwrap();
-
-            // validity check
-            if !self.dominos.get(domino_index).unwrap().pickable {
-                println!("This domino is not on the board. Pick another");
-                continue;
-            }
-            break;
-        }
-
-        // make the change
-        self.current_player_mut()
-            .state
-            .domino_stack
-            .push(domino::Domino::from(domino_value));
-        self.dominos.get_mut(domino_index).unwrap().pickable = false;
-
-        Ok(())
-    }
-    pub fn show_current_player_state(&self) {
-        println!();
-        println!(
-            "Remaining dice to draw {:?}",
-            self.current_player().state.rollable_dice_count()
-        );
-        println!(
-            "Total of collected dice: {:?}",
-            self.current_player().state.dice_total()
-        );
-        println!("Has Maggot: {:?}", self.current_player().state.has_maggot());
-        println!(
-            "Total of collected domino: {:?}",
-            self.current_player().state.domino_total()
-        );
-        println!("Available domino on the board game");
-        self.println_pickable_dominos();
-    }
-    pub fn play_current_player(&mut self) {
-        shell::clear_shell();
-        loop {
-            shell::print_seperator_shell();
-            println!(
-                "{:} please, select an action: draw OR pick OR show",
-                self.current_player().name
-            );
-            let mut action = String::new();
-
-            io::stdin()
-                .read_line(&mut action)
-                .expect("Failed to read line");
-
-            let action_result = match action.trim() {
-                "draw" | "d" => self.draw_dice(),
-                "pick" | "p" => self.pick_domino(),
-                "show" | "s" => {
-                    self.show_current_player_state();
-                    continue;
-                }
-                _ => {
-                    println!("Unknown action");
-                    continue;
-                }
-            };
-            match action_result {
-                // re-ask action if previous action went bad
-                Err(message) => {
-                    println!("Error: {:?}", message);
-                    continue;
-                }
-                // leave the loop if the action went well
-                _ => break,
-            }
+            total
         }
     }
-    pub fn is_finished(&self) -> bool {
-        for domino in self.dominos.iter() {
-            if domino.pickable == true {
-                return false;
-            }
-        }
-        return true;
-    }
-    pub fn run(&mut self) {
-        println!("Game start");
 
-        while !self.is_finished() {
-            self.play_current_player();
-            self.select_next_player();
-        }
-        println!("Game end");
+    #[derive(Debug)]
+    pub struct Player {
+        pub name: String,
+        pub state: PlayerState,
+    }
+
+    pub fn parse_player_name() -> String {
+        let mut player_name = String::with_capacity(MAX_SIZE_PLAYER_NAME);
+        io::stdin()
+            .read_line(&mut player_name)
+            .expect("Failed to read player name");
+
+        String::from(player_name.trim())
     }
 }
 
