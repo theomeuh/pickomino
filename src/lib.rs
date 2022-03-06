@@ -39,24 +39,24 @@ impl GameState {
         }
     }
 
-    pub fn current_player(&self) -> &player::Player {
+    fn current_player(&self) -> &player::Player {
         &self.players[self.index_current_player]
     }
 
-    pub fn current_player_mut(&mut self) -> &mut player::Player {
+    fn current_player_mut(&mut self) -> &mut player::Player {
         &mut self.players[self.index_current_player]
     }
 
-    pub fn select_next_player(&mut self) {
+    fn select_next_player(&mut self) {
         self.index_current_player = (self.index_current_player + 1) % self.players.len()
     }
 
-    pub fn roll_dice(&self) -> Vec<dice::Die> {
+    fn roll_dice(&self) -> Vec<dice::Die> {
         let rollable_dice_count = self.current_player().state.rollable_dice_count();
         dice::roll_dice(rollable_dice_count)
     }
 
-    pub fn add_dice_to_current_player(&mut self, count: usize, label: &dice::DieLabel) {
+    fn add_dice_to_current_player(&mut self, count: usize, label: &dice::DieLabel) {
         for _ in 0..count {
             self.current_player_mut()
                 .state
@@ -65,7 +65,7 @@ impl GameState {
         }
     }
 
-    pub fn println_pickable_dominos(&self) {
+    fn println_pickable_dominos(&self) {
         for domino in self.dominos.iter() {
             if domino.pickable {
                 print!("{:?} ", domino.label)
@@ -74,7 +74,7 @@ impl GameState {
         println!()
     }
 
-    pub fn count_pickable_dice_by_label(
+    fn count_pickable_dice_by_label(
         &self,
         dice: &Vec<dice::Die>,
         label: &dice::DieLabel,
@@ -99,7 +99,7 @@ impl GameState {
         count
     }
 
-    pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
+    fn draw_dice(&mut self) -> Result<(), PickominoError> {
         println!("'draw' selected");
         shell::print_seperator_shell();
         if self.current_player().state.rollable_dice_count() == 0 {
@@ -137,7 +137,7 @@ impl GameState {
         }
         Ok(())
     }
-    pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
+    fn pick_domino(&mut self) -> Result<(), PickominoError> {
         println!("'pick' selected");
         println!(
             "You can pick a domino up to {:?}. Minimum is 21",
@@ -189,7 +189,7 @@ impl GameState {
 
         Ok(())
     }
-    pub fn show_current_player_state(&self) {
+    fn show_current_player_state(&self) {
         println!();
         println!(
             "Remaining dice to draw {:?}",
@@ -207,7 +207,7 @@ impl GameState {
         println!("Available domino on the board game");
         self.println_pickable_dominos();
     }
-    pub fn play_current_player(&mut self) {
+    fn play_current_player(&mut self) {
         shell::clear_shell();
         loop {
             shell::print_seperator_shell();
@@ -244,7 +244,7 @@ impl GameState {
             }
         }
     }
-    pub fn is_finished(&self) -> bool {
+    fn is_finished(&self) -> bool {
         for domino in self.dominos.iter() {
             if domino.pickable == true {
                 return false;
@@ -528,7 +528,7 @@ mod dice {
             }
         }
 
-        pub fn roll() -> Die {
+        fn roll() -> Die {
             match rand::thread_rng().gen_range(1..=6) {
                 1 => Die {
                     label: DieLabel::One,
