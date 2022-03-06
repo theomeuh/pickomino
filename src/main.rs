@@ -664,12 +664,12 @@ pub fn parse_number_player(max_player: usize) -> usize {
     }
 }
 
+/// print special shell character to clear a shell
 pub fn clear_shell() {
-    // print special shell caracter to clear a shell
     print!("\x1B[2J");
 }
 
+/// use to separate group of message
 pub fn print_seperator_shell() {
-    // use to separate group of message
     println!("--------------------------------");
 }
