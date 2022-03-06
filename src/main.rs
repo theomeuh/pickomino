@@ -7,7 +7,6 @@ use std::result::Result;
 pub const DICE_COUNT: usize = 8;
 
 const DOMINO_COUNT: usize = 16;
-const MAX_ROUND: usize = 10;
 const MAX_SIZE_PLAYER_NAME: usize = 50;
 const PLAYER_MAX_COUNT: usize = 8;
 const DOMINOS: [Domino; DOMINO_COUNT] = [
@@ -383,7 +382,6 @@ pub struct GameState {
     index_current_player: usize, // index in players Vector of the current player
     dominos: [Domino; DOMINO_COUNT],
     finished: bool,
-    round_number: usize,
 }
 
 pub fn parse_player_name() -> String {
@@ -422,12 +420,7 @@ impl GameState {
             index_current_player: 0,
             dominos: DOMINOS,
             finished: false,
-            round_number: 0,
         }
-    }
-
-    pub fn is_finished(&self) -> bool {
-        !self.finished && self.round_number <= MAX_ROUND
     }
 
     pub fn current_player(&self) -> &Player {
@@ -631,20 +624,20 @@ impl GameState {
             }
         }
     }
-    pub fn compute_finished(&mut self) {
-        if self.round_number > 4 {
-            self.finished = true
+    pub fn is_finished(&self) -> bool {
+        for domino in self.dominos.iter() {
+            if domino.pickable == true {
+                return false;
+            }
         }
+        return true;
     }
     pub fn run(&mut self) {
         println!("Game start");
 
         while self.is_finished() {
-            self.round_number += 1;
             self.play_current_player();
             self.select_next_player();
-
-            self.compute_finished()
         }
         println!("Game end");
     }
