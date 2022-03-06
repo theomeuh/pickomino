@@ -98,6 +98,7 @@ pub enum PickominoError {
     NoDiceToRoll,
     UnknownDiceLabel,
     DominoTooBig,
+    CancelAction,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -485,7 +486,7 @@ impl GameState {
         count
     }
 
-    pub fn draw_dice(&mut self) -> Result<String, PickominoError> {
+    pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
         println!("'draw' selected");
         print_seperator_shell();
         if self.current_player().state.rollable_dice_count() == 0 {
@@ -521,46 +522,59 @@ impl GameState {
                 break;
             }
         }
-        Ok("OK".to_string())
+        Ok(())
     }
-    pub fn pick_domino(&mut self) -> Result<String, PickominoError> {
+    pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
         println!("'pick' selected");
         println!(
-            "You can pick a domino up to {:?}",
+            "You can pick a domino up to {:?}. Minimum is 21",
             self.current_player().state.dice_total()
         );
-        // read input
-        println!("Select a domino label");
-        let mut domino_label = String::new();
-        io::stdin()
-            .read_line(&mut domino_label)
-            .expect("Failed to read line");
-        let domino_label = domino_label.trim().parse::<u8>().unwrap();
 
-        if domino_label > self.current_player().state.dice_total() {
-            return Err(PickominoError::DominoTooBig);
-        }
+        let mut domino_value: u8;
+        let mut domino_index: usize;
+        loop {
+            // read input
+            println!("Select a domino label or type 'cancel'");
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
 
-        // find the domino
-        let domino_index = self
-            .dominos
-            .iter()
-            .position(|domino| domino.label == domino_label)
-            .unwrap();
+            match input.trim() {
+                "cancel" | "c" => return Err(PickominoError::CancelAction),
+                _ => {}
+            }
+            domino_value = input.trim().parse::<u8>().unwrap();
 
-        // validity check
-        if !self.dominos.get(domino_index).unwrap().pickable {
-            panic!("This domino is not pickable")
+            if domino_value > self.current_player().state.dice_total() {
+                println!("You cannot pick this domino. Pick a lower one");
+                continue;
+            }
+
+            // find the domino on the board game
+            domino_index = self
+                .dominos
+                .iter()
+                .position(|domino| domino.label == domino_value)
+                .unwrap();
+
+            // validity check
+            if !self.dominos.get(domino_index).unwrap().pickable {
+                println!("This domino is not on the board. Pick another");
+                continue;
+            }
+            break;
         }
 
         // make the change
         self.current_player_mut()
             .state
             .domino_stack
-            .push(Domino::from(domino_label));
+            .push(Domino::from(domino_value));
         self.dominos.get_mut(domino_index).unwrap().pickable = false;
 
-        Ok("Ok".to_string())
+        Ok(())
     }
     pub fn show_current_player_state(&self) {
         println!();
