@@ -324,13 +324,6 @@ impl Domino {
 }
 
 #[derive(Debug)]
-pub enum PlayerAction {
-    Roll,
-    Draw,
-    Surrend,
-}
-
-#[derive(Debug)]
 struct PlayerState {
     domino_stack: Vec<Domino>, // a player stack can contains at most the total number of domino
     dice_drawn: Vec<Die>,      // dice already drawn
