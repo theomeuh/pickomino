@@ -394,8 +394,6 @@ pub fn parse_player_name() -> String {
     String::from(player_name.trim())
 }
 
-pub fn parse_action_input(state: &mut GameState) {}
-
 pub fn _roll_dice(number_dice: usize) -> Vec<Die> {
     let mut dice = Vec::with_capacity(number_dice);
     for _ in 0..number_dice {
@@ -487,10 +485,16 @@ impl GameState {
         count
     }
 
-    pub fn _draw_dice(&mut self, dice: &Vec<Die>) {
+    pub fn draw_dice(&mut self) -> Result<String, PickominoError> {
+        println!("'draw' selected");
+        print_seperator_shell();
+        if self.current_player().state.rollable_dice_count() == 0 {
+            return Err(PickominoError::NoDiceToRoll);
+        }
+        let rolled_dice = self.roll_dice();
         loop {
             // read input
-            println!("You rolled {}", PrintVecDie(dice.clone()));
+            println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
             println!("Select a die label");
             let mut label = String::new();
             io::stdin()
@@ -506,7 +510,7 @@ impl GameState {
             };
 
             // make stuff
-            let count = self.count_pickable_dice_by_label(dice, &label);
+            let count = self.count_pickable_dice_by_label(&rolled_dice, &label);
             if count == 0 {
                 // loop if no die can be drawn
                 println!("Dice '{:?}' cannot be drawn", label);
@@ -517,18 +521,14 @@ impl GameState {
                 break;
             }
         }
+        Ok("OK".to_string())
     }
-    pub fn draw_dice(&mut self) -> Result<(), PickominoError> {
-        println!("'draw' selected");
-        print_seperator_shell();
-        if self.current_player().state.rollable_dice_count() == 0 {
-            return Err(PickominoError::NoDiceToRoll);
-        }
-        let rolled_dice = self.roll_dice();
-        self._draw_dice(&rolled_dice);
-        Ok(())
-    }
-    pub fn _pick_domino(&mut self) -> Result<(), PickominoError> {
+    pub fn pick_domino(&mut self) -> Result<String, PickominoError> {
+        println!("'pick' selected");
+        println!(
+            "You can pick a domino up to {:?}",
+            self.current_player().state.dice_total()
+        );
         // read input
         println!("Select a domino label");
         let mut domino_label = String::new();
@@ -560,15 +560,7 @@ impl GameState {
             .push(Domino::from(domino_label));
         self.dominos.get_mut(domino_index).unwrap().pickable = false;
 
-        Ok(())
-    }
-    pub fn pick_domino(&mut self) -> Result<(), PickominoError> {
-        println!("'pick' selected");
-        println!(
-            "You can pick a domino up to {:?}",
-            self.current_player().state.dice_total()
-        );
-        self._pick_domino()
+        Ok("Ok".to_string())
     }
     pub fn show_current_player_state(&self) {
         println!();
