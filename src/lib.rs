@@ -373,7 +373,6 @@ pub struct GameState {
     players: Vec<Player>,
     index_current_player: usize, // index in players Vector of the current player
     dominos: [Domino; DOMINO_COUNT],
-    finished: bool,
 }
 
 pub fn parse_player_name() -> String {
@@ -411,7 +410,6 @@ impl GameState {
             players: players,
             index_current_player: 0,
             dominos: DOMINOS,
-            finished: false,
         }
     }
 
