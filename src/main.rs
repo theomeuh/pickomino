@@ -119,7 +119,7 @@ impl DieLabel {
             "four" | "Four" => Ok(DieLabel::Four),
             "five" | "Five" => Ok(DieLabel::Five),
             "maggot" | "Maggot" => Ok(DieLabel::Maggot),
-            _ => Err(PickominoError::DominoTooBig),
+            _ => Err(PickominoError::UnknownDiceLabel),
         }
     }
 }
