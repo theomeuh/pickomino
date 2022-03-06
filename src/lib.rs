@@ -1,10 +1,15 @@
-use rand::Rng;
-use std::fmt;
 use std::io;
 use std::result::Result;
 
-const MAX_SIZE_PLAYER_NAME: usize = 50;
+#[derive(Debug)]
+pub enum PickominoError {
+    NoDiceToRoll,
+    UnknownDiceLabel,
+    DominoTooBig,
+    CancelAction,
+}
 
+const MAX_SIZE_PLAYER_NAME: usize = 50;
 pub const DICE_COUNT: usize = 8;
 
 mod domino {
@@ -195,140 +200,137 @@ mod domino {
     }
 }
 
-#[derive(Debug)]
-pub enum PickominoError {
-    NoDiceToRoll,
-    UnknownDiceLabel,
-    DominoTooBig,
-    CancelAction,
-}
+mod dice {
+    use rand::Rng;
+    use std::fmt;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum DieLabel {
-    One = 1,
-    Two = 2,
-    Three = 3,
-    Four = 4,
-    Five = 5,
-    Maggot = 6,
-}
-
-impl DieLabel {
-    pub fn from(label: &str) -> Result<DieLabel, PickominoError> {
-        match label {
-            "one" | "One" => Ok(DieLabel::One),
-            "two" | "Two" => Ok(DieLabel::Two),
-            "three" | "Three" => Ok(DieLabel::Three),
-            "four" | "Four" => Ok(DieLabel::Four),
-            "five" | "Five" => Ok(DieLabel::Five),
-            "maggot" | "Maggot" => Ok(DieLabel::Maggot),
-            _ => Err(PickominoError::UnknownDiceLabel),
-        }
+    #[derive(Clone, Debug, PartialEq)]
+    pub enum DieLabel {
+        One = 1,
+        Two = 2,
+        Three = 3,
+        Four = 4,
+        Five = 5,
+        Maggot = 6,
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct Die {
-    pub label: DieLabel,
-    pub value: u8,
-    pub sort_value: u8,
-}
-
-impl fmt::Display for Die {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.label)
-    }
-}
-
-impl Die {
-    pub fn from(label: &DieLabel) -> Die {
-        match label {
-            DieLabel::One => Die {
-                label: DieLabel::One,
-                value: 1,
-                sort_value: 1,
-            },
-            DieLabel::Two => Die {
-                label: DieLabel::Two,
-                value: 2,
-                sort_value: 2,
-            },
-            DieLabel::Three => Die {
-                label: DieLabel::Three,
-                value: 3,
-                sort_value: 3,
-            },
-            DieLabel::Four => Die {
-                label: DieLabel::Four,
-                value: 4,
-                sort_value: 4,
-            },
-            DieLabel::Five => Die {
-                label: DieLabel::Five,
-                value: 5,
-                sort_value: 5,
-            },
-            DieLabel::Maggot => Die {
-                label: DieLabel::Maggot,
-                value: 5,
-                sort_value: 6,
-            },
+    impl DieLabel {
+        pub fn from(label: &str) -> Result<DieLabel, crate::PickominoError> {
+            match label {
+                "one" | "One" => Ok(DieLabel::One),
+                "two" | "Two" => Ok(DieLabel::Two),
+                "three" | "Three" => Ok(DieLabel::Three),
+                "four" | "Four" => Ok(DieLabel::Four),
+                "five" | "Five" => Ok(DieLabel::Five),
+                "maggot" | "Maggot" => Ok(DieLabel::Maggot),
+                _ => Err(crate::PickominoError::UnknownDiceLabel),
+            }
         }
     }
 
-    pub fn roll() -> Die {
-        match rand::thread_rng().gen_range(1..=6) {
-            1 => Die {
-                label: DieLabel::One,
-                value: 1,
-                sort_value: 1,
-            },
-            2 => Die {
-                label: DieLabel::Two,
-                value: 2,
-                sort_value: 2,
-            },
-            3 => Die {
-                label: DieLabel::Three,
-                value: 3,
-                sort_value: 3,
-            },
-            4 => Die {
-                label: DieLabel::Four,
-                value: 4,
-                sort_value: 4,
-            },
-            5 => Die {
-                label: DieLabel::Five,
-                value: 5,
-                sort_value: 5,
-            },
-            6 => Die {
-                label: DieLabel::Maggot,
-                value: 5,
-                sort_value: 6,
-            },
-            _ => unreachable!(),
+    #[derive(Clone, Debug)]
+    pub struct Die {
+        pub label: DieLabel,
+        pub value: u8,
+        pub sort_value: u8,
+    }
+
+    impl fmt::Display for Die {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "{:?}", self.label)
         }
     }
-}
 
-struct PrintVecDie(Vec<Die>);
-impl fmt::Display for PrintVecDie {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut sorted_dice = self.0.to_vec(); // copy vector
-        sorted_dice.sort_unstable_by_key(|die| die.sort_value); // sort it
-        for die in sorted_dice {
-            write!(f, "{:?} ", die.label)?
+    impl Die {
+        pub fn from(label: &DieLabel) -> Die {
+            match label {
+                DieLabel::One => Die {
+                    label: DieLabel::One,
+                    value: 1,
+                    sort_value: 1,
+                },
+                DieLabel::Two => Die {
+                    label: DieLabel::Two,
+                    value: 2,
+                    sort_value: 2,
+                },
+                DieLabel::Three => Die {
+                    label: DieLabel::Three,
+                    value: 3,
+                    sort_value: 3,
+                },
+                DieLabel::Four => Die {
+                    label: DieLabel::Four,
+                    value: 4,
+                    sort_value: 4,
+                },
+                DieLabel::Five => Die {
+                    label: DieLabel::Five,
+                    value: 5,
+                    sort_value: 5,
+                },
+                DieLabel::Maggot => Die {
+                    label: DieLabel::Maggot,
+                    value: 5,
+                    sort_value: 6,
+                },
+            }
         }
-        Ok(())
+
+        pub fn roll() -> Die {
+            match rand::thread_rng().gen_range(1..=6) {
+                1 => Die {
+                    label: DieLabel::One,
+                    value: 1,
+                    sort_value: 1,
+                },
+                2 => Die {
+                    label: DieLabel::Two,
+                    value: 2,
+                    sort_value: 2,
+                },
+                3 => Die {
+                    label: DieLabel::Three,
+                    value: 3,
+                    sort_value: 3,
+                },
+                4 => Die {
+                    label: DieLabel::Four,
+                    value: 4,
+                    sort_value: 4,
+                },
+                5 => Die {
+                    label: DieLabel::Five,
+                    value: 5,
+                    sort_value: 5,
+                },
+                6 => Die {
+                    label: DieLabel::Maggot,
+                    value: 5,
+                    sort_value: 6,
+                },
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    pub struct PrintVecDie(pub Vec<Die>);
+    impl fmt::Display for PrintVecDie {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            let mut sorted_dice = self.0.to_vec(); // copy vector
+            sorted_dice.sort_unstable_by_key(|die| die.sort_value); // sort it
+            for die in sorted_dice {
+                write!(f, "{:?} ", die.label)?
+            }
+            Ok(())
+        }
     }
 }
 
 #[derive(Debug)]
 struct PlayerState {
     domino_stack: Vec<domino::Domino>, // a player stack can contains at most the total number of domino
-    dice_drawn: Vec<Die>,              // dice already drawn
+    dice_drawn: Vec<dice::Die>,        // dice already drawn
 }
 
 impl PlayerState {
@@ -350,7 +352,7 @@ impl PlayerState {
     }
     fn has_maggot(&self) -> bool {
         for die in self.dice_drawn.iter() {
-            if die.label == DieLabel::Maggot {
+            if die.label == dice::DieLabel::Maggot {
                 return true;
             }
         }
@@ -387,10 +389,10 @@ pub fn parse_player_name() -> String {
     String::from(player_name.trim())
 }
 
-pub fn _roll_dice(number_dice: usize) -> Vec<Die> {
+pub fn _roll_dice(number_dice: usize) -> Vec<dice::Die> {
     let mut dice = Vec::with_capacity(number_dice);
     for _ in 0..number_dice {
-        dice.push(Die::roll())
+        dice.push(dice::Die::roll())
     }
     dice
 }
@@ -428,17 +430,17 @@ impl GameState {
         self.index_current_player = (self.index_current_player + 1) % self.players.len()
     }
 
-    pub fn roll_dice(&self) -> Vec<Die> {
+    pub fn roll_dice(&self) -> Vec<dice::Die> {
         let rollable_dice_count = self.current_player().state.rollable_dice_count();
         _roll_dice(rollable_dice_count)
     }
 
-    pub fn add_dice_to_current_player(&mut self, count: usize, label: &DieLabel) {
+    pub fn add_dice_to_current_player(&mut self, count: usize, label: &dice::DieLabel) {
         for _ in 0..count {
             self.current_player_mut()
                 .state
                 .dice_drawn
-                .push(Die::from(label))
+                .push(dice::Die::from(label))
         }
     }
 
@@ -451,7 +453,11 @@ impl GameState {
         println!()
     }
 
-    pub fn count_pickable_dice_by_label(&self, dice: &Vec<Die>, label: &DieLabel) -> usize {
+    pub fn count_pickable_dice_by_label(
+        &self,
+        dice: &Vec<dice::Die>,
+        label: &dice::DieLabel,
+    ) -> usize {
         // count how many die have the label in the last draw
         let count = dice.iter().filter(|die| &die.label == label).count();
         if count == 0 {
@@ -481,13 +487,13 @@ impl GameState {
         let rolled_dice = self.roll_dice();
         loop {
             // read input
-            println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
+            println!("You rolled {}", dice::PrintVecDie(rolled_dice.clone()));
             println!("Select a die label");
             let mut label = String::new();
             io::stdin()
                 .read_line(&mut label)
                 .expect("Failed to read line");
-            let label = match DieLabel::from(label.trim()) {
+            let label = match dice::DieLabel::from(label.trim()) {
                 Ok(label) => label,
                 Err(_) => {
                     shell::print_seperator_shell();
