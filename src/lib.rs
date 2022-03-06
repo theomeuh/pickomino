@@ -627,7 +627,7 @@ impl GameState {
     pub fn run(&mut self) {
         println!("Game start");
 
-        while self.is_finished() {
+        while !self.is_finished() {
             self.play_current_player();
             self.select_next_player();
         }
