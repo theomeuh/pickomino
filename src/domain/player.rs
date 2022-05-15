@@ -2,21 +2,21 @@ use std::io;
 
 use serde::{Deserialize, Serialize};
 
-use crate::dice;
-use crate::domino;
+use crate::domain::dice::*;
+use crate::domain::domino::*;
 
 pub const MAX_SIZE_PLAYER_NAME: usize = 50;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PlayerState {
-    pub domino_stack: Vec<domino::Domino>, // a player stack can contains at most the total number of domino
-    pub dice_drawn: Vec<dice::Die>,        // dice already drawn
+    pub domino_stack: Vec<Domino>, // a player stack can contains at most the total number of domino
+    pub dice_drawn: Vec<Die>, // dice already drawn
 }
 
 impl PlayerState {
     pub fn init() -> PlayerState {
         PlayerState {
-            domino_stack: Vec::with_capacity(domino::DOMINO_COUNT),
+            domino_stack: Vec::with_capacity(DOMINO_COUNT),
             dice_drawn: Vec::with_capacity(crate::DICE_COUNT),
         }
     }
@@ -32,7 +32,7 @@ impl PlayerState {
     }
     pub fn has_maggot(&self) -> bool {
         for die in self.dice_drawn.iter() {
-            if die.label == dice::DieLabel::Maggot {
+            if die.label == DieLabel::Maggot {
                 return true;
             }
         }

@@ -8,10 +8,12 @@ use std::result::Result;
 
 use serde::{Deserialize, Serialize};
 
+use domain::dice::*;
+use domain::domino::*;
+use domain::player::*;
+
 mod constant;
-mod dice;
-mod domino;
-mod player;
+mod domain;
 mod shell;
 
 pub const DICE_COUNT: usize = 8;
@@ -26,9 +28,9 @@ pub enum PickominoError {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {
-    players: Vec<player::Player>,
+    players: Vec<Player>,
     index_current_player: usize, // index in players Vector of the current player
-    dominos: Vec<domino::Domino>,
+    dominos: Vec<Domino>,
 }
 
 impl GameState {
@@ -36,10 +38,10 @@ impl GameState {
         let mut players = Vec::with_capacity(player_count);
         for i in 0..player_count {
             println!("Enter name of player {:?}", (i + 1));
-            let player_name = player::parse_player_name();
-            players.push(player::Player {
+            let player_name = parse_player_name();
+            players.push(Player {
                 name: player_name,
-                state: player::PlayerState::init(),
+                state: PlayerState::init(),
             });
 
             println!("{:?}", players[i]);
@@ -48,15 +50,15 @@ impl GameState {
         GameState {
             players: players,
             index_current_player: 0,
-            dominos: domino::DOMINOS.to_vec(),
+            dominos: DOMINOS.to_vec(),
         }
     }
 
-    fn current_player(&self) -> &player::Player {
+    fn current_player(&self) -> &Player {
         &self.players[self.index_current_player]
     }
 
-    fn current_player_mut(&mut self) -> &mut player::Player {
+    fn current_player_mut(&mut self) -> &mut Player {
         &mut self.players[self.index_current_player]
     }
 
@@ -64,17 +66,17 @@ impl GameState {
         self.index_current_player = (self.index_current_player + 1) % self.players.len()
     }
 
-    fn roll_dice(&self) -> Vec<dice::Die> {
+    fn roll_dice(&self) -> Vec<Die> {
         let rollable_dice_count = self.current_player().state.rollable_dice_count();
-        dice::roll_dice(rollable_dice_count)
+        roll_dice(rollable_dice_count)
     }
 
-    fn add_dice_to_current_player(&mut self, count: usize, label: &dice::DieLabel) {
+    fn add_dice_to_current_player(&mut self, count: usize, label: &DieLabel) {
         for _ in 0..count {
             self.current_player_mut()
                 .state
                 .dice_drawn
-                .push(dice::Die::from(label))
+                .push(Die::from(label))
         }
     }
 
@@ -85,7 +87,7 @@ impl GameState {
         println!()
     }
 
-    fn count_pickable_dice_by_label(&self, dice: &Vec<dice::Die>, label: &dice::DieLabel) -> usize {
+    fn count_pickable_dice_by_label(&self, dice: &Vec<Die>, label: &DieLabel) -> usize {
         // count how many die have the label in the last draw
         let count = dice.iter().filter(|die| &die.label == label).count();
         if count == 0 {
@@ -115,13 +117,13 @@ impl GameState {
         let rolled_dice = self.roll_dice();
         loop {
             // read input
-            println!("You rolled {}", dice::PrintVecDie(rolled_dice.clone()));
+            println!("You rolled {}", PrintVecDie(rolled_dice.clone()));
             println!("Select a die label");
             let mut label = String::new();
             io::stdin()
                 .read_line(&mut label)
                 .expect("Failed to read line");
-            let label = match dice::DieLabel::from(label.trim()) {
+            let label = match DieLabel::from(label.trim()) {
                 Ok(label) => label,
                 Err(_) => {
                     shell::print_seperator_shell();

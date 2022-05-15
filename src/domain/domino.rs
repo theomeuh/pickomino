@@ -69,6 +69,7 @@ pub const DOMINOS: [Domino; DOMINO_COUNT] = [
         value: 4,
     },
 ];
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Domino {
     pub label: u8,
