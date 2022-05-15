@@ -1,5 +1,6 @@
 use std::fmt;
 
+use crate::domain::error::PickominoError;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +15,7 @@ pub enum DieLabel {
 }
 
 impl DieLabel {
-    pub fn from(label: &str) -> Result<DieLabel, crate::PickominoError> {
+    pub fn from(label: &str) -> Result<DieLabel, PickominoError> {
         match label {
             "one" | "One" => Ok(DieLabel::One),
             "two" | "Two" => Ok(DieLabel::Two),
@@ -22,7 +23,7 @@ impl DieLabel {
             "four" | "Four" => Ok(DieLabel::Four),
             "five" | "Five" => Ok(DieLabel::Five),
             "maggot" | "Maggot" => Ok(DieLabel::Maggot),
-            _ => Err(crate::PickominoError::UnknownDiceLabel),
+            _ => Err(PickominoError::UnknownDiceLabel),
         }
     }
 }

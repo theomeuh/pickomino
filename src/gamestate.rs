@@ -8,29 +8,19 @@ use std::result::Result;
 
 use serde::{Deserialize, Serialize};
 
-use domain::dice::*;
-use domain::domino::*;
-use domain::player::*;
-
-mod constant;
-mod domain;
-mod shell;
-
-pub const DICE_COUNT: usize = 8;
-
-#[derive(Debug)]
-pub enum PickominoError {
-    NoDiceToRoll,
-    UnknownDiceLabel,
-    DominoTooBig,
-    CancelAction,
-}
+use crate::domain::dice::{roll_dice, Die, DieLabel, PrintVecDie};
+use crate::domain::domino::{Domino, DOMINOS};
+use crate::domain::error::PickominoError;
+use crate::domain::player::{Player, PlayerState};
+use crate::infrastructure::parser::parse_player_name;
+use crate::infrastructure::shell_display_utility::*;
+use crate::constant::{SAVE_FILENAME, SAVE_FOLDER};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {
-    players: Vec<Player>,
-    index_current_player: usize, // index in players Vector of the current player
-    dominos: Vec<Domino>,
+    pub players: Vec<Player>,
+    pub index_current_player: usize, // index in players Vector of the current player
+    pub dominos: Vec<Domino>,
 }
 
 impl GameState {
@@ -110,7 +100,7 @@ impl GameState {
 
     fn draw_dice(&mut self) -> Result<(), PickominoError> {
         println!("'draw' selected");
-        shell::print_seperator_shell();
+        print_seperator_shell();
         if self.current_player().state.rollable_dice_count() == 0 {
             return Err(PickominoError::NoDiceToRoll);
         }
@@ -126,7 +116,7 @@ impl GameState {
             let label = match DieLabel::from(label.trim()) {
                 Ok(label) => label,
                 Err(_) => {
-                    shell::print_seperator_shell();
+                    print_seperator_shell();
                     println!("Wrong Die Label");
                     continue;
                 }
@@ -210,9 +200,9 @@ impl GameState {
         self.println_pickable_dominos();
     }
     fn play_current_player(&mut self) {
-        shell::clear_shell();
+        clear_shell();
         loop {
-            shell::print_seperator_shell();
+            print_seperator_shell();
             println!(
                 "{:} please, select an action: draw OR pick OR show OR save",
                 self.current_player().name
@@ -253,7 +243,7 @@ impl GameState {
     fn save_party(&self) {
         let serialized_game = serde_json::to_string(self).unwrap();
 
-        match fs::create_dir(constant::SAVE_FOLDER) {
+        match fs::create_dir(SAVE_FOLDER) {
             Ok(_) => {}
             Err(error) => match error.kind() {
                 ErrorKind::AlreadyExists => {}
@@ -261,7 +251,7 @@ impl GameState {
             },
         };
 
-        let path = Path::new(constant::SAVE_FOLDER).join(constant::SAVE_FILENAME);
+        let path = Path::new(SAVE_FOLDER).join(SAVE_FILENAME);
         let mut file = File::create(path).expect("Cannot create save file");
 
         file.write_all(serialized_game.as_bytes())
