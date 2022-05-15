@@ -27,7 +27,7 @@ pub enum PickominoError {
 pub struct GameState {
     players: Vec<player::Player>,
     index_current_player: usize, // index in players Vector of the current player
-    dominos: [domino::Domino; domino::DOMINO_COUNT],
+    dominos: Vec<domino::Domino>,
 }
 
 impl GameState {
@@ -47,7 +47,7 @@ impl GameState {
         GameState {
             players: players,
             index_current_player: 0,
-            dominos: domino::DOMINOS,
+            dominos: domino::DOMINOS.to_vec(),
         }
     }
 
@@ -79,9 +79,7 @@ impl GameState {
 
     fn println_pickable_dominos(&self) {
         for domino in self.dominos.iter() {
-            if domino.pickable {
-                print!("{:?} ", domino.label)
-            }
+            print!("{:?} ", domino.label)
         }
         println!()
     }
@@ -153,7 +151,7 @@ impl GameState {
         );
 
         let mut domino_value: u8;
-        let mut domino_index: usize;
+        let domino_index: usize;
         loop {
             // read input
             println!("Select a domino label or type 'cancel'");
@@ -179,22 +177,15 @@ impl GameState {
                 .iter()
                 .position(|domino| domino.label == domino_value)
                 .unwrap();
-
-            // validity check
-            if !self.dominos.get(domino_index).unwrap().pickable {
-                println!("This domino is not on the board. Pick another");
-                continue;
-            }
             break;
         }
 
         // make the change
+        let picked_domino = self.dominos.swap_remove(domino_index);
         self.current_player_mut()
             .state
             .domino_stack
-            .push(domino::Domino::from(domino_value));
-        self.dominos.get_mut(domino_index).unwrap().pickable = false;
-
+            .push(picked_domino);
         Ok(())
     }
     fn show_current_player_state(&self) {
@@ -262,18 +253,13 @@ impl GameState {
         fs::create_dir(constant::SAVE_FOLDER).expect("Cannot create save folder");
         let path = Path::new(constant::SAVE_FOLDER).join(constant::SAVE_FILENAME);
         let mut file = File::create(path).expect("Cannot create save file");
-        
+
         file.write_all(serialized_game.as_bytes())
             .expect("Cannot write save");
         println!("Party saved");
     }
     fn is_finished(&self) -> bool {
-        for domino in self.dominos.iter() {
-            if domino.pickable == true {
-                return false;
-            }
-        }
-        return true;
+        return self.dominos.is_empty();
     }
     pub fn run(&mut self) {
         println!("Game start");
