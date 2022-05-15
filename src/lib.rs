@@ -1,6 +1,13 @@
+use std::fs;
+use std::fs::File;
 use std::io;
+use std::io::prelude::*;
+use std::path::Path;
 use std::result::Result;
 
+use serde::{Deserialize, Serialize};
+
+mod constant;
 mod dice;
 mod domino;
 mod player;
@@ -16,7 +23,7 @@ pub enum PickominoError {
     CancelAction,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {
     players: Vec<player::Player>,
     index_current_player: usize, // index in players Vector of the current player
@@ -213,7 +220,7 @@ impl GameState {
         loop {
             shell::print_seperator_shell();
             println!(
-                "{:} please, select an action: draw OR pick OR show",
+                "{:} please, select an action: draw OR pick OR show OR save",
                 self.current_player().name
             );
             let mut action = String::new();
@@ -227,6 +234,10 @@ impl GameState {
                 "pick" | "p" => self.pick_domino(),
                 "show" | "s" => {
                     self.show_current_player_state();
+                    continue;
+                }
+                "save" => {
+                    self.save_party();
                     continue;
                 }
                 _ => {
@@ -244,6 +255,17 @@ impl GameState {
                 _ => break,
             }
         }
+    }
+    fn save_party(&self) {
+        let serialized_game = serde_json::to_string(self).unwrap();
+
+        fs::create_dir(constant::SAVE_FOLDER).expect("Cannot create save folder");
+        let path = Path::new(constant::SAVE_FOLDER).join(constant::SAVE_FILENAME);
+        let mut file = File::create(path).expect("Cannot create save file");
+        
+        file.write_all(serialized_game.as_bytes())
+            .expect("Cannot write save");
+        println!("Party saved");
     }
     fn is_finished(&self) -> bool {
         for domino in self.dominos.iter() {

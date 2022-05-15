@@ -1,10 +1,13 @@
+use std::io;
+
+use serde::{Deserialize, Serialize};
+
 use crate::dice;
 use crate::domino;
-use std::io;
 
 pub const MAX_SIZE_PLAYER_NAME: usize = 50;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PlayerState {
     pub domino_stack: Vec<domino::Domino>, // a player stack can contains at most the total number of domino
     pub dice_drawn: Vec<dice::Die>,        // dice already drawn
@@ -44,7 +47,7 @@ impl PlayerState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
     pub name: String,
     pub state: PlayerState,

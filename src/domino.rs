@@ -1,5 +1,7 @@
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 pub const DOMINO_COUNT: usize = 16;
 pub const DOMINOS: [Domino; DOMINO_COUNT] = [
     Domino {
@@ -83,6 +85,7 @@ pub const DOMINOS: [Domino; DOMINO_COUNT] = [
         pickable: true,
     },
 ];
+#[derive(Serialize, Deserialize)]
 pub struct Domino {
     pub label: u8,
     pub value: u8,

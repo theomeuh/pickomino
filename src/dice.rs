@@ -1,7 +1,9 @@
-use rand::Rng;
 use std::fmt;
 
-#[derive(Clone, Debug, PartialEq)]
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum DieLabel {
     One = 1,
     Two = 2,
@@ -25,7 +27,7 @@ impl DieLabel {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Die {
     pub label: DieLabel,
     pub value: u8,
