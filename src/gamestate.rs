@@ -8,13 +8,13 @@ use std::result::Result;
 
 use serde::{Deserialize, Serialize};
 
+use crate::constant::{SAVE_FILENAME, SAVE_FOLDER};
 use crate::domain::dice::{roll_dice, Die, DieLabel, PrintVecDie};
 use crate::domain::domino::{Domino, DOMINOS};
 use crate::domain::error::PickominoError;
 use crate::domain::player::{Player, PlayerState};
 use crate::infrastructure::parser::parse_player_name;
 use crate::infrastructure::shell_display_utility::*;
-use crate::constant::{SAVE_FILENAME, SAVE_FOLDER};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {

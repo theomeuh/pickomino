@@ -1,9 +1,9 @@
 use std::io;
 
 use crate::constant::*;
+use crate::gamestate::GameState;
 use crate::infrastructure::main_menu::*;
 use crate::infrastructure::shell_display_utility::*;
-use crate::gamestate::GameState;
 
 pub fn parse_number_player(max_player: usize) -> usize {
     println!("Please input number of players.");
