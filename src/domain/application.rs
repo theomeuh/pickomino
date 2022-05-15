@@ -1,59 +1,41 @@
-use std::fs;
-use std::fs::File;
 use std::io;
-use std::io::prelude::*;
-use std::io::ErrorKind;
-use std::path::Path;
+
 use std::result::Result;
 
-use serde::{Deserialize, Serialize};
-
-use crate::constant::{SAVE_FILENAME, SAVE_FOLDER};
 use crate::domain::dice::{roll_dice, Die, DieLabel, PrintVecDie};
-use crate::domain::domino::{Domino, DOMINOS};
 use crate::domain::error::PickominoError;
-use crate::domain::player::{Player, PlayerState};
-use crate::infrastructure::parser::parse_player_name;
+use crate::domain::game_state_repository::GameStateRepository;
+use crate::domain::player::Player;
+use crate::game_state::GameState;
 use crate::infrastructure::shell_display_utility::*;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GameState {
-    pub players: Vec<Player>,
-    pub index_current_player: usize, // index in players Vector of the current player
-    pub dominos: Vec<Domino>,
+pub struct Application<'a> {
+    pub game_state: GameState,
+    pub game_state_repository: &'a dyn GameStateRepository,
 }
 
-impl GameState {
-    pub fn init(player_count: usize) -> GameState {
-        let mut players = Vec::with_capacity(player_count);
-        for i in 0..player_count {
-            println!("Enter name of player {:?}", (i + 1));
-            let player_name = parse_player_name();
-            players.push(Player {
-                name: player_name,
-                state: PlayerState::init(),
-            });
-
-            println!("{:?}", players[i]);
-        }
-
-        GameState {
-            players: players,
-            index_current_player: 0,
-            dominos: DOMINOS.to_vec(),
+impl Application<'_> {
+    pub fn new(
+        game_state: GameState,
+        game_state_repository: &dyn GameStateRepository,
+    ) -> Application {
+        Application {
+            game_state: game_state,
+            game_state_repository: game_state_repository,
         }
     }
 
     fn current_player(&self) -> &Player {
-        &self.players[self.index_current_player]
+        &self.game_state.players[self.game_state.index_current_player]
     }
 
     fn current_player_mut(&mut self) -> &mut Player {
-        &mut self.players[self.index_current_player]
+        &mut self.game_state.players[self.game_state.index_current_player]
     }
 
     fn select_next_player(&mut self) {
-        self.index_current_player = (self.index_current_player + 1) % self.players.len()
+        self.game_state.index_current_player =
+            (self.game_state.index_current_player + 1) % self.game_state.players.len()
     }
 
     fn roll_dice(&self) -> Vec<Die> {
@@ -71,7 +53,7 @@ impl GameState {
     }
 
     fn println_pickable_dominos(&self) {
-        for domino in self.dominos.iter() {
+        for domino in self.game_state.dominos.iter() {
             print!("{:?} ", domino.label)
         }
         println!()
@@ -166,6 +148,7 @@ impl GameState {
 
             // find the domino on the board game
             domino_index = self
+                .game_state
                 .dominos
                 .iter()
                 .position(|domino| domino.label == domino_value)
@@ -174,7 +157,7 @@ impl GameState {
         }
 
         // make the change
-        let picked_domino = self.dominos.swap_remove(domino_index);
+        let picked_domino = self.game_state.dominos.swap_remove(domino_index);
         self.current_player_mut()
             .state
             .domino_stack
@@ -221,7 +204,7 @@ impl GameState {
                     continue;
                 }
                 "save" => {
-                    self.save_party();
+                    self.game_state_repository.save(&self.game_state);
                     continue;
                 }
                 _ => {
@@ -240,26 +223,9 @@ impl GameState {
             }
         }
     }
-    fn save_party(&self) {
-        let serialized_game = serde_json::to_string(self).unwrap();
 
-        match fs::create_dir(SAVE_FOLDER) {
-            Ok(_) => {}
-            Err(error) => match error.kind() {
-                ErrorKind::AlreadyExists => {}
-                _ => panic!("Cannot create save folder: {:?}", error),
-            },
-        };
-
-        let path = Path::new(SAVE_FOLDER).join(SAVE_FILENAME);
-        let mut file = File::create(path).expect("Cannot create save file");
-
-        file.write_all(serialized_game.as_bytes())
-            .expect("Cannot write save");
-        println!("Party saved");
-    }
     fn is_finished(&self) -> bool {
-        return self.dominos.is_empty();
+        return self.game_state.dominos.is_empty();
     }
     pub fn run(&mut self) {
         println!("Game start");

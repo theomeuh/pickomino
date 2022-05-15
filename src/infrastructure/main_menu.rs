@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::constant;
-use crate::gamestate::GameState;
+use crate::game_state::GameState;
 use crate::infrastructure::parser::parse_number_player;
 
 pub fn new_game() -> GameState {

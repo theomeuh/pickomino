@@ -1,7 +1,7 @@
 use std::io;
 
 use crate::constant::*;
-use crate::gamestate::GameState;
+use crate::game_state::GameState;
 use crate::infrastructure::main_menu::*;
 use crate::infrastructure::shell_display_utility::*;
 
