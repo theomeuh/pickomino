@@ -2,6 +2,7 @@ use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::io::ErrorKind;
 use std::path::Path;
 use std::result::Result;
 
@@ -250,7 +251,14 @@ impl GameState {
     fn save_party(&self) {
         let serialized_game = serde_json::to_string(self).unwrap();
 
-        fs::create_dir(constant::SAVE_FOLDER).expect("Cannot create save folder");
+        match fs::create_dir(constant::SAVE_FOLDER) {
+            Ok(_) => {}
+            Err(error) => match error.kind() {
+                ErrorKind::AlreadyExists => {}
+                _ => panic!("Cannot create save folder: {:?}", error),
+            },
+        };
+
         let path = Path::new(constant::SAVE_FOLDER).join(constant::SAVE_FILENAME);
         let mut file = File::create(path).expect("Cannot create save file");
 
