@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::domino::{Domino, DOMINOS};
+use crate::domain::domino::Domino;
+use crate::domain::domino::DOMINOS;
 use crate::domain::player::{Player, PlayerState};
-use crate::infrastructure::parser::parse_player_name;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {
@@ -12,17 +12,13 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn init(player_count: usize) -> GameState {
-        let mut players = Vec::with_capacity(player_count);
-        for i in 0..player_count {
-            println!("Enter name of player {:?}", (i + 1));
-            let player_name = parse_player_name();
+    pub fn new(player_names: Vec<String>) -> GameState {
+        let mut players = Vec::with_capacity(player_names.len());
+        for player_name in player_names.into_iter() {
             players.push(Player {
                 name: player_name,
                 state: PlayerState::init(),
             });
-
-            println!("{:?}", players[i]);
         }
 
         GameState {

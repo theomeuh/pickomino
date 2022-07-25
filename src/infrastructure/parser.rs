@@ -1,11 +1,22 @@
 use std::io;
 
 use crate::constant::*;
-use crate::game_state::GameState;
-use crate::infrastructure::main_menu::*;
 use crate::infrastructure::shell_display_utility::*;
 
-pub fn parse_number_player(max_player: usize) -> usize {
+pub fn parse_player_names(max_player: usize) -> Vec<String> {
+    let player_count = parse_player_count(max_player);
+
+    let mut players = Vec::with_capacity(max_player);
+
+    for i in 0..player_count {
+        println!("Enter name of player {:?}", (i + 1));
+        let player_name = parse_player_name();
+        players.push(player_name)
+    }
+    players
+}
+
+pub fn parse_player_count(max_player: usize) -> usize {
     println!("Please input number of players.");
     loop {
         let mut player_count = String::new();
@@ -25,7 +36,7 @@ pub fn parse_number_player(max_player: usize) -> usize {
     }
 }
 
-pub fn parse_party_selection() -> GameState {
+pub fn parse_party_selection() -> MainMenuAction {
     loop {
         print_seperator_shell();
         println!("Please select an action: new OR resume",);
@@ -37,10 +48,10 @@ pub fn parse_party_selection() -> GameState {
 
         match action.trim() {
             "new" | "n" => {
-                return new_game();
+                return MainMenuAction::NewGame;
             }
             "resume" | "e" => {
-                return resume_game();
+                return MainMenuAction::ResumeGame;
             }
             _ => {
                 println!("Unknown action");
@@ -48,6 +59,12 @@ pub fn parse_party_selection() -> GameState {
             }
         };
     }
+}
+
+#[derive(Debug)]
+pub enum MainMenuAction {
+    NewGame = 1,
+    ResumeGame = 2,
 }
 
 pub fn parse_player_name() -> String {

@@ -4,8 +4,8 @@ use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::path::Path;
 
+use crate::domain::game_state::GameState;
 use crate::domain::game_state_repository::GameStateRepository;
-use crate::game_state::GameState;
 
 pub struct GameStateRepositoryFileSystem<'a> {
     save_folder: &'a str,
