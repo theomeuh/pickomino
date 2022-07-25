@@ -50,7 +50,7 @@ pub fn parse_party_selection() -> MainMenuAction {
             "new" | "n" => {
                 return MainMenuAction::NewGame;
             }
-            "resume" | "e" => {
+            "resume" | "r" => {
                 return MainMenuAction::ResumeGame;
             }
             _ => {
