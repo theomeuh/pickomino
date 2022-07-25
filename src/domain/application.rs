@@ -5,7 +5,7 @@ use std::result::Result;
 use crate::domain::dice::{roll_dice, Die, DieLabel, PrintVecDie};
 use crate::domain::error::PickominoError;
 use crate::domain::game_state::GameState;
-use crate::domain::game_state_repository::GameStateRepository;
+use crate::domain::game_state::GameStateRepository;
 use crate::domain::player::Player;
 use crate::infrastructure::shell_display_utility::*;
 

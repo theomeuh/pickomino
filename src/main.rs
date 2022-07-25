@@ -1,7 +1,7 @@
 use crate::constant::{PLAYER_MAX_COUNT, SAVE_FILENAME, SAVE_FOLDER};
 use domain::application::Application;
 use domain::game_state::GameState;
-use domain::game_state_repository::GameStateRepository;
+use domain::game_state::GameStateRepository;
 use infrastructure::game_state_repository_file_system::GameStateRepositoryFileSystem;
 use infrastructure::parser::MainMenuAction;
 use infrastructure::parser::{parse_party_selection, parse_player_names};
@@ -21,7 +21,6 @@ fn main() {
         }
         MainMenuAction::ResumeGame => game_state_repository.load(),
     };
-
 
     let mut app = Application::new(game_state, &game_state_repository);
 

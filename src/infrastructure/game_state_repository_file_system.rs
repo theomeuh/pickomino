@@ -5,7 +5,7 @@ use std::io::ErrorKind;
 use std::path::Path;
 
 use crate::domain::game_state::GameState;
-use crate::domain::game_state_repository::GameStateRepository;
+use crate::domain::game_state::GameStateRepository;
 
 pub struct GameStateRepositoryFileSystem<'a> {
     save_folder: &'a str,
