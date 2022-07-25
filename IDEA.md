@@ -1,0 +1,2 @@
+- Have an event bus to split logical business to display / communication business
+- recode the logic as an automate and on each transition, emit an event / display somethin
