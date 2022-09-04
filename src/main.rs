@@ -1,28 +1,19 @@
-use crate::constant::{PLAYER_MAX_COUNT, SAVE_FILENAME, SAVE_FOLDER};
-use domain::application::Application;
-use domain::game_state::GameState;
-use domain::game_state::GameStateRepository;
-use infrastructure::game_state_repository_file_system::GameStateRepositoryFileSystem;
-use infrastructure::parser::MainMenuAction;
-use infrastructure::parser::{parse_party_selection, parse_player_names};
+use crate::server::actions::Actions;
 
+mod client;
 mod constant;
-mod domain;
-mod infrastructure;
+mod server;
 
 fn main() {
-    let main_menu_action = parse_party_selection();
-    let game_state_repository = GameStateRepositoryFileSystem::new(SAVE_FOLDER, SAVE_FILENAME);
+    let server = server::server::Server::new();
+    println!("Server started");
+    let client = client::client::Client::new(server);
+    println!("Client started\n");
 
-    let game_state = match main_menu_action {
-        MainMenuAction::NewGame => {
-            let player_names = parse_player_names(PLAYER_MAX_COUNT);
-            GameState::new(player_names)
-        }
-        MainMenuAction::ResumeGame => game_state_repository.load(),
-    };
+    loop {
+        println!("Select an Action");
+        println!("{}", Actions(client.list_actions()));
 
-    let mut app = Application::new(game_state, &game_state_repository);
-
-    app.run();
+        client.select_action();
+    }
 }

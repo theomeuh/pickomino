@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::dice::*;
-use crate::domain::domino::*;
+use crate::server::dice::*;
+use crate::server::domino::*;
 
 use crate::constant::DICE_COUNT;
 

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::domain::error::PickominoError;
+use crate::server::error::PickominoError;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
